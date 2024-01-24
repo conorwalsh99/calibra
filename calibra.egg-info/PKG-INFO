@@ -1,0 +1,68 @@
+Metadata-Version: 2.1
+Name: calibra
+Version: 0.1.0
+Summary: Toolkit for calibration of machine learning classifiers.
+Home-page: https://github.com/conorwalsh99/calibra
+Author: Conor Walsh
+Author-email: conorwalsh206@gmail.com
+License: MIT license
+Keywords: calibra
+Classifier: Development Status :: 2 - Pre-Alpha
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Natural Language :: English
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.6
+Classifier: Programming Language :: Python :: 3.7
+Classifier: Programming Language :: Python :: 3.8
+Requires-Python: >=3.6
+License-File: LICENSE
+License-File: AUTHORS.rst
+
+=======
+calibra
+=======
+
+
+.. image:: https://img.shields.io/pypi/v/calibra.svg
+        :target: https://pypi.python.org/pypi/calibra
+
+.. image:: https://img.shields.io/travis/conorwalsh99/calibra.svg
+        :target: https://travis-ci.com/conorwalsh99/calibra
+
+.. image:: https://readthedocs.org/projects/calibra/badge/?version=latest
+        :target: https://calibra.readthedocs.io/en/latest/?version=latest
+        :alt: Documentation Status
+
+
+
+
+Toolkit for calibration of machine learning classifiers.
+
+
+* Free software: MIT license
+* Documentation: https://calibra.readthedocs.io.
+
+
+Features
+--------
+
+* TODO
+
+Credits
+-------
+
+This package was created with Cookiecutter_ and the `audreyr/cookiecutter-pypackage`_ project template.
+
+.. _Cookiecutter: https://github.com/audreyr/cookiecutter
+.. _`audreyr/cookiecutter-pypackage`: https://github.com/audreyr/cookiecutter-pypackage
+
+
+=======
+History
+=======
+
+0.1.0 (2024-01-24)
+------------------
+
+* First release on PyPI.
