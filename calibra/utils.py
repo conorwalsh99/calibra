@@ -70,7 +70,7 @@ def get_equal_width_bins(y_pred: np.ndarray, y_true: np.ndarray, num_classes: in
         num_bins (int):
             Number of equal-width bins the interval [0, 1] is divided into.
         bins (dict):
-            Dictionary containing, for each class, each bin, itself containing the predicted probabilities and number of occurences of the given class.
+            Dictionary containing, for each class, each bin, itself containing the predicted probabilities and occurences of the given class.
     
     Returns:
         dict
@@ -93,7 +93,6 @@ def get_equal_width_bins(y_pred: np.ndarray, y_true: np.ndarray, num_classes: in
             
     return bins
 
-
 def get_equal_frequency_bins(y_pred: np.ndarray, y_true: np.ndarray, num_classes: int, num_samples: int, num_bins: int, bins: dict) -> dict:
     """
     Group predictions into bins containing equal numbers of data points.
@@ -110,26 +109,117 @@ def get_equal_frequency_bins(y_pred: np.ndarray, y_true: np.ndarray, num_classes
         num_bins (int):
             Approximate number of bins the interval [0, 1] is divided into, each containing approximately the same number of data points.
         bins (dict):
-            Dictionary containing, for each class, each bin, itself containing the predicted probabilities and number of occurences of the given class.
+            Dictionary containing, for each class, each bin, itself containing the predicted probabilities and occurences of the given class.
     
     Returns:
         dict
     """    
-    points_per_bin = math.ceil(num_samples / num_bins)
+    lower_bound_freq = math.floor(num_samples / num_bins)
+    upper_bound_freq = math.ceil(num_samples / num_bins)
 
     for i in range(num_classes):
         y_pred_class_i = y_pred[i].to_list()
         y_true_class_i = list(y_true == i)
         y_pred_class_i_sorted, y_true_class_i_sorted = sort_predictions(y_pred_class_i, y_true_class_i)
-        for b in range(num_bins):
-            probs = []
-            num_occurrences = 0
-            while len(probs) < points_per_bin:
-                probs.append(y_pred_class_i_sorted.pop(0)) # moving first item of sorted list to end of probs. Check this does what you expect it to.
-                num_occurrences += y_true_class_i_sorted.pop(0)
-            bins[i][b]['probs'] = probs
-            bins[i][b]['num_occurrences'] = num_occurrences
+        # forward-fill bins up to upper bound 
+        bins = forward_fill_equal_frequency_bins(class_label=i, 
+                                                num_bins=num_bins, 
+                                                bins=bins, 
+                                                upper_bound_freq=upper_bound_freq, 
+                                                y_pred_class_i_sorted=y_pred_class_i_sorted, 
+                                                y_true_class_i_sorted=y_true_class_i_sorted)     
+        # back-fill bins above lower bound
+        bins = back_fill_equal_frequency_bins(class_label=i,
+                                            num_bins=num_bins,
+                                            bins=bins,
+                                            lower_bound_freq=lower_bound_freq)
+        # calculate num_occurrences once bins filled satisfactorily
+        bins = sum_occurrences(class_label=i, num_bins=num_bins, bins=bins)
+    
+    return bins
 
+
+def forward_fill_equal_frequency_bins(class_label: str, num_bins: int, bins: dict, upper_bound_freq: int, y_pred_class_i_sorted: list, y_true_class_i_sorted: list) -> dict:
+    """
+    For each bin in the given class, assign predictions until the upper limit of points per bin is reached.    
+
+    Args:
+        class_label (str):
+            The class under consideration.
+        num_bins (int):
+            Number of bins the interval [0, 1] is divided into.
+        bins (dict):
+            Dictionary containing, for each class, each bin, itself containing the predicted probabilities and occurences of the given class.
+        upper_bound_freq (int):
+            Maximum number of points a given bin may contain.
+        y_pred_class_i_sorted (list):
+            List of predicted probabilities (in ascending order) for the given class.
+        y_true_class_i_sorted (list):
+            List of true labels for the given class, sorted according to the predicted probabilities (in ascending order).
+
+    Returns:
+        dict
+    """
+    i = class_label
+    for b in range(num_bins):
+        bins[i][b]['occurrences'] = [] # need to track the occurrence associated with each prediction because these may be redistributed to different bins later
+        while len(bins[i][b]['probs']) < upper_bound_freq and len(y_pred_class_i_sorted) > 0:
+            bins[i][b]['probs'].append(y_pred_class_i_sorted.pop(0))
+            bins[i][b]['occurrences'].append(y_true_class_i_sorted.pop(0))
+    return bins
+
+def back_fill_equal_frequency_bins(class_label: str, num_bins: int, bins: dict, lower_bound_freq: int) -> dict:
+    """
+    Redistribute predictions between bins so that each bin contains at least a specified minimum number of samples.
+
+    For a given class, iterate backwards through the bins, continuously reassigning the final sample in the preceding bin to the given bin, 
+    until the given bin contains at least a specified minimum number of points. If a bin already has at least this number of minimum points upon first inspection, 
+    exit the loop.
+
+    Args:
+        class_label (str):
+            The class under consideration.
+        num_bins (int):
+            Number of bins the interval [0, 1] is divided into.
+        bins (dict):
+            Dictionary containing, for each class, each bin, itself containing the predicted probabilities and occurences of the given class.
+        lower_bound_freq (int):
+            Minimum number of points a given bin must contain.
+        y_pred_class_i_sorted (list):
+            List of predicted probabilities (in ascending order) for the given class.
+        y_true_class_i_sorted (list):
+            List of true labels for the given class, sorted according to the predicted probabilities (in ascending order).
+
+    Returns:
+        dict
+    """
+    i = class_label
+    for b in range(num_bins-1, 0, -1):
+        if len(bins[i][b]['probs']) >= lower_bound_freq:
+            return bins
+        while len(bins[i][b]['probs']) < lower_bound_freq:
+            bins[i][b]['probs'].insert(0, bins[i][b-1]['probs'].pop(-1))
+            bins[i][b]['occurrences'].insert(0, bins[i][b-1]['occurrences'].pop(-1))
+    return bins
+
+def sum_occurrences(class_label: str, num_bins: int, bins: dict) -> dict:
+    """
+    For a given class, loop through the bins and find the number of occurrences of the given class in each bin.
+
+    Once this sum of occurrences is found, delete the (now irrelevant) list tracking these occurrences.
+
+    Args:
+        class_label (str):
+            The class under consideration.
+        num_bins (int):
+            Number of bins the interval [0, 1] is divided into.
+        bins (dict):
+            Dictionary containing, for each class, each bin, itself containing the predicted probabilities and occurences of the given class.    
+    """
+    i = class_label
+    for b in range(num_bins):
+        bins[i][b]['num_occurrences'] = sum(bins[i][b]['occurrences'])
+        del bins[i][b]['occurrences']    
     return bins
 
 

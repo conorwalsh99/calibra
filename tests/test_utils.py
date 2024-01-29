@@ -5,8 +5,6 @@
 import pytest
 import pandas as pd 
 import numpy as np 
-from numpy.testing import assert_array_equal
-from deepdiff import DeepDiff
 
 
 from calibra.utils import bin_probabilities, get_equal_width_bins, get_equal_frequency_bins, sort_predictions
@@ -132,7 +130,8 @@ def expected_get_equal_width_bins_good_input():
         }
     }
 
-
+# as get_equal_frequency_bins uses sort_predictions to sort by the size of probability, we see that in the resulting bins, the probabilities are always in ascending order e.g. [0.05, 0.15].
+# this is not necessarily true for get_equal_width_bins, where we loop through the predictions as they are presented to us, hence the difference in the resulting bins.
 @pytest.fixture
 def expected_get_equal_frequency_bins_good_input():
     return {
@@ -249,16 +248,78 @@ def bin_probabilities_good_input_frequency_2d_y_pred():
     method = 'frequency'
     return y_pred, y_true, num_bins, method 
 
-def preprocess_dict(d, precision=6):
-    """ Recursively round floating point numbers in a dictionary. """
-    for key, value in d.items():
-        if isinstance(value, dict):
-            preprocess_dict(value, precision)
-        elif isinstance(value, float):
-            d[key] = round(value, precision)
-        elif isinstance(value, (list, tuple)):
-            d[key] = [round(v, precision) if isinstance(v, float) else v for v in value]
-    return d
+
+@pytest.fixture
+def get_equal_frequency_bins_non_integer_freq():
+    y_pred = pd.DataFrame(
+        {
+            0: [0.95, 0.9, 0.85, 0.8, 0.8, 0.7, 0.65, 0.6, 0.55, 0.5, 0.45, 0.4, 0.35],
+            1: [0.05, 0.1, 0.15, 0.2, 0.2, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65]
+        }
+    )
+    y_true = np.asarray([1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1])
+    num_classes, num_samples, num_bins = 2, 13, 4
+    bins = {
+        i: {
+            j: {
+                'probs': [],
+                'num_occurrences': 0,
+                }
+                for j in range(num_bins)
+            } 
+            for i in range(num_classes)
+        }
+
+    return y_pred, y_true, num_classes, num_samples, num_bins, bins
+
+@pytest.fixture
+def expected_get_equal_frequency_bins_non_integer_freq():
+    return {        
+            0: {
+                0: {
+                    'probs': [0.35, 0.4, 0.45, 0.5],
+                    'num_occurrences': 0,
+                },
+
+                1: {
+                    'probs': [0.55, 0.6, 0.65],
+                    'num_occurrences': 0,
+                },
+
+                2: {
+                    'probs': [0.7, 0.8, 0.8],
+                    'num_occurrences': 1,
+                },
+
+                3: {
+                    'probs': [0.85, 0.9, 0.95],
+                    'num_occurrences': 0,
+                }                         
+            },
+
+            1: {
+                0: {
+                    'probs': [0.05, 0.1, 0.15, 0.2],
+                    'num_occurrences': 3,
+                },
+
+                1: {
+                    'probs': [0.2, 0.3, 0.35],
+                    'num_occurrences': 3,
+                },
+
+                2: {
+                    'probs': [0.4, 0.45, 0.5],
+                    'num_occurrences': 3,
+                },
+
+                3: {
+                    'probs': [0.55, 0.6, 0.65],
+                    'num_occurrences': 3,
+                }
+            }
+        }
+    
 
 
 def test_sort_predictions_good_input(sort_predictions_good_input, expected_sort_predictions_good_input):
@@ -425,4 +486,39 @@ def test_bin_probabilities_good_input_frequency_2d_ypred(bin_probabilities_good_
     except:
         dicts_equal = False
 
-    assert dicts_equal, message 
+    assert dicts_equal, message
+
+    
+def test_get_equal_frequency_bins_non_integer_freq(get_equal_frequency_bins_non_integer_freq, expected_get_equal_frequency_bins_non_integer_freq):
+    result = get_equal_frequency_bins(*get_equal_frequency_bins_non_integer_freq)
+    expected = expected_get_equal_frequency_bins_non_integer_freq
+
+    message = f"Bins do not match. Returned {result} instead of {expected}."
+
+    dicts_equal = True
+    try:
+        for class_key in expected.keys():
+            expected_class_level_dict = expected[class_key]
+            result_class_level_dict = result[class_key]
+            for bin_key in expected_class_level_dict.keys():
+                expected_bin_level_dict = expected_class_level_dict[bin_key]
+                result_bin_level_dict = result_class_level_dict[bin_key]
+                expected_probs = expected_bin_level_dict['probs']
+                result_probs = result_bin_level_dict['probs']
+                expected_num_occurrences = expected_bin_level_dict['num_occurrences']
+                result_num_occurrences = result_bin_level_dict['num_occurrences']
+
+                if expected_num_occurrences != result_num_occurrences:
+                    dicts_equal = False
+                    print(f'Class: {class_key}, bin: {bin_key}, expected num_occurrences: {expected_num_occurrences}, result num_occurrences: {result_num_occurrences}')
+                    raise AssertionError('Dictionaries not equal')
+                elif len(expected_probs) != len(result_probs):
+                    print(f'Class: {class_key}, bin: {bin_key}, expected num_occurrences: {expected_num_occurrences}, result num_occurrences: {result_num_occurrences}')
+                    raise AssertionError('Dictionaries not equal')
+                elif not all(abs(a - b) < 1e-8 for a, b in zip(expected_probs, result_probs)):
+                    print(f'Class: {class_key}, bin: {bin_key}, expected num_occurrences: {expected_num_occurrences}, result num_occurrences: {result_num_occurrences}')
+                    raise AssertionError('Dictionaries not equal')
+    except:
+        dicts_equal = False
+
+    assert dicts_equal, message
