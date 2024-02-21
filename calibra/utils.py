@@ -23,12 +23,7 @@ def bin_probabilities(y_pred: np.ndarray, y_true: np.ndarray, num_bins: int, met
     Returns:
         dict
     """
-    if np.asarray(y_pred).ndim == 1:
-        y_pred = np.asarray(
-            [
-            [1 - prob, prob] for prob in y_pred
-            ]
-        )
+    y_pred = reshape_y_pred(y_pred=y_pred)
     num_samples, num_classes = y_pred.shape
 
     y_pred = pd.DataFrame(data=y_pred, columns=[i for i in range(num_classes)]) 
@@ -52,6 +47,47 @@ def bin_probabilities(y_pred: np.ndarray, y_true: np.ndarray, num_bins: int, met
         raise ValueError("Method must be 'width' or 'frequency'")
 
     return bins
+
+
+def reshape_y_pred(y_pred: np.ndarray) -> np.ndarray:
+    """
+    If y_pred is a 1D array, reshape to (num_samples, num_classes)
+
+    Args:
+        y_pred (ndarray):
+            Array-like object of shape (num_samples, num_classes) where ij position is predicted probability of data point i belonging to class j.
+            Alternatively may be of shape (num_samples,) where i position is predicted probability of data point i belonging to class 1 (positive class).
+
+    Returns:
+        ndarray
+    """
+    if np.asarray(y_pred).ndim == 1:
+        y_pred = np.asarray(
+            [
+            [1 - prob, prob] for prob in y_pred
+            ]
+        )
+
+    return y_pred
+
+
+def _get_bin_weight(bin: dict, num_samples: int) -> float:
+    """
+    Calculate the proportion of the overall dataset whose predictions lie in the given bin.
+
+    Args:
+        bin (dict):
+            Dictionary containing the predicted probabilities for a given class and the number of occurrences of that class, for a given bin.
+        num_samples (int):
+            Number of data points.
+
+    Returns:
+        float            
+    """
+    probs = bin['probs']
+    num_trials = len(probs)
+    weight = num_trials / num_samples
+    return weight
 
 
 def get_equal_width_bins(y_pred: np.ndarray, y_true: np.ndarray, num_classes: int, num_samples: int, num_bins: int, bins: dict) -> dict:

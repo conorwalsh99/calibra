@@ -1,7 +1,3 @@
-#!/usr/bin/env python
-
-"""Tests for `calibra` package."""
-
 import pytest
 import pandas as pd 
 import numpy as np 
@@ -522,3 +518,4 @@ def test_get_equal_frequency_bins_non_integer_freq(get_equal_frequency_bins_non_
         dicts_equal = False
 
     assert dicts_equal, message
+    
