@@ -23,7 +23,7 @@ def bin_probabilities(y_pred: np.ndarray, y_true: np.ndarray, num_bins: int, met
     Returns:
         dict
     """
-    y_pred = reshape_y_pred(y_pred=y_pred)
+    y_pred = _reshape_y_pred(y_pred=y_pred)
     num_samples, num_classes = y_pred.shape
 
     y_pred = pd.DataFrame(data=y_pred, columns=[i for i in range(num_classes)]) 
@@ -49,7 +49,7 @@ def bin_probabilities(y_pred: np.ndarray, y_true: np.ndarray, num_bins: int, met
     return bins
 
 
-def reshape_y_pred(y_pred: np.ndarray) -> np.ndarray:
+def _reshape_y_pred(y_pred: np.ndarray) -> np.ndarray:
     """
     If y_pred is a 1D array, reshape to (num_samples, num_classes)
 

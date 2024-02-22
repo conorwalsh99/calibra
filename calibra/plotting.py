@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np 
 from typing import Union
 
-from utils import bin_probabilities, reshape_y_pred, _get_bin_weight
+from utils import bin_probabilities, _get_bin_weight
 
 
 def _get_classwise_bin_weights(bins: dict, num_bins: int, num_samples: int, num_classes: int) -> np.ndarray:

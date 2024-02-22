@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np 
 from typing import Union
 
-from calibra.utils import bin_probabilities, reshape_y_pred, _get_bin_weight
+from calibra.utils import bin_probabilities, _reshape_y_pred, _get_bin_weight
 
 
 def classwise_ece(
@@ -41,7 +41,7 @@ def classwise_ece(
                 np.ndarray:
                     Numpy array of shape (num_classes) whose ith element represents the contribution of class i to the class-wise expected calibration error. 
     """
-    y_pred = reshape_y_pred(y_pred)
+    y_pred = _reshape_y_pred(y_pred)
     num_samples, num_classes = y_pred.shape
 
     bins = bin_probabilities(y_pred, y_true, num_bins, method)     
