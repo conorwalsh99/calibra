@@ -116,12 +116,10 @@ def get_equal_width_bins(y_pred: np.ndarray, y_true: np.ndarray, num_classes: in
         y_true_class_i = list(y_true == i) 
         bin_index = list(
             map(
-                lambda x: (num_bins-1) if x==1 else math.floor(
-                    (100 * x) / (100 / num_bins)
-                    ), 
+                lambda x: (num_bins-1) if x==1 else math.floor(num_bins * x), 
                     y_pred_class_i
                 )
-                ) 
+            ) 
         # returns num_bins-1 if p==1, else returns m for p in [(m-1)/num_bins, m/num_bins] 
         for j in range(num_samples): 
             bins[i][bin_index[j]]['probs'].append(y_pred_class_i[j]) # group predicted probabilities into the bins
