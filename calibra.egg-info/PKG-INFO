@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: calibra
-Version: 0.1.0
+Version: 0.2.0
 Summary: Toolkit for calibration of machine learning classifiers.
 Home-page: https://github.com/conorwalsh99/calibra
 Author: Conor Walsh

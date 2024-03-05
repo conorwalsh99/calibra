@@ -7,11 +7,15 @@ README.rst
 setup.cfg
 setup.py
 calibra/__init__.py
-calibra/calibra.py
+calibra/calibrators.py
+calibra/errors.py
+calibra/plotting.py
+calibra/utils.py
 calibra.egg-info/PKG-INFO
 calibra.egg-info/SOURCES.txt
 calibra.egg-info/dependency_links.txt
 calibra.egg-info/not-zip-safe
+calibra.egg-info/requires.txt
 calibra.egg-info/top_level.txt
 docs/Makefile
 docs/authors.rst
@@ -24,4 +28,5 @@ docs/make.bat
 docs/readme.rst
 docs/usage.rst
 tests/__init__.py
-tests/test_calibra.py
+tests/test_errors.py
+tests/test_utils.py
