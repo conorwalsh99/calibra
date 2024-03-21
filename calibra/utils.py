@@ -1,8 +1,63 @@
 import math
 import pandas as pd
 import numpy as np
+from typing import Callable, Any, List
+from functools import wraps
 
 
+def validate_input(func: Callable[..., Any]) -> Callable[..., Any]:
+    """
+    Validate the input parameters to ensure they are in the correct format. Convert to correct format where possible, otherwise, raise error.
+
+    Args:
+        func: The method for which we validate the input.
+
+    The decorator performs the following validations:
+    1. y_pred must be a 1D or 2D array with values between 0 and 1. It is converted to a NumPy array.
+    2. y_true must be a list or 1D array of non-negative integers. It is converted to a NumPy array.
+    3. y_true and y_pred must have the same length.
+    4. num_bins must be a positive integer.
+    5. method must be one of two specific string values ('width' or 'frequency').
+
+    Raises:
+      ValueError: If any of the inputs do not meet the validation criteria.
+
+    Returns:
+      The original function's return value, if all inputs are valid.
+    """    
+    @wraps(func)
+    def wrapper(y_pred, y_true, num_bins, method, *args, **kwargs):
+        
+        y_pred = np.asarray(y_pred)
+        if y_pred.ndim > 2 or np.any(y_pred < 0) or np.any(y_pred > 1):
+            raise ValueError("y_pred must be a 1D or 2D array with values between 0 and 1.")
+        
+        if isinstance(y_true, list):
+            if not all(label % 1 == 0 and label >= 0 for label in y_true):
+                raise ValueError("y_true must only contain non-negative whole numbers.")
+            y_true = np.array(y_true)
+
+        elif isinstance(y_true, np.ndarray):
+            if y_true.ndim != 1 or np.any(y_true % 1 != 0) or np.any(y_true < 0):
+                raise ValueError("y_true must be a list or 1D array of non-negative whole numbers.")
+        else:
+            raise TypeError("y_true must be either a list or a 1D numpy array.")
+
+        if y_true.size != y_pred.shape[0]:
+            raise ValueError("y_true and y_pred must have the same length.")
+        
+        if num_bins % 1 != 0 or num_bins <= 0:
+            raise ValueError("num_bins must be a positive whole number.")
+        num_bins = int(num_bins)
+        
+        if method not in ['width', 'frequency']:
+            raise ValueError("Method must be either 'width' or 'frequency'")
+
+        return func(y_pred, y_true, num_bins, method, *args, **kwargs)
+    return wrapper
+
+
+@validate_input
 def bin_probabilities(y_pred: np.ndarray, y_true: np.ndarray, num_bins: int, method: str = 'width') -> dict:
     """
     Group predictions into bins, along with corresponding true labels.
@@ -10,7 +65,7 @@ def bin_probabilities(y_pred: np.ndarray, y_true: np.ndarray, num_bins: int, met
     Args:
         y_pred (ndarray):
             Array-like object of shape (num_samples, num_classes) where ij position is predicted probability of data point i belonging to class j.
-            Alternatively may be of shape (num_samples,) where i position is predicted probability of data point i belonging to class 1 (positive class).
+            Alternatively may be of shape (num_samples,) for binary classification where i position is predicted probability of data point i belonging to class 1 (positive class).
         y_true (ndarray):
             This 1-D array of length num_samples contains the true label for each data point.        
         num_bins (int):
@@ -40,14 +95,11 @@ def bin_probabilities(y_pred: np.ndarray, y_true: np.ndarray, num_bins: int, met
         }
 
     if method == 'width':
-        bins = get_equal_width_bins(y_pred, y_true, num_classes, num_samples, num_bins, bins)
+        bins = _get_equal_width_bins(y_pred, y_true, num_classes, num_samples, num_bins, bins)
     elif method == 'frequency':
-        bins = get_equal_frequency_bins(y_pred, y_true, num_classes, num_samples, num_bins, bins)
-    else:
-        raise ValueError("Method must be 'width' or 'frequency'")
+        bins = _get_equal_frequency_bins(y_pred, y_true, num_classes, num_samples, num_bins, bins)
 
     return bins
-
 
 def _reshape_y_pred(y_pred: np.ndarray) -> np.ndarray:
     """
@@ -56,7 +108,7 @@ def _reshape_y_pred(y_pred: np.ndarray) -> np.ndarray:
     Args:
         y_pred (ndarray):
             Array-like object of shape (num_samples, num_classes) where ij position is predicted probability of data point i belonging to class j.
-            Alternatively may be of shape (num_samples,) where i position is predicted probability of data point i belonging to class 1 (positive class).
+            Alternatively may be of shape (num_samples,) for binary classification where i position is predicted probability of data point i belonging to class 1 (positive class).
 
     Returns:
         ndarray
@@ -69,7 +121,6 @@ def _reshape_y_pred(y_pred: np.ndarray) -> np.ndarray:
         )
 
     return y_pred
-
 
 def _get_bin_weight(bin: dict, num_samples: int) -> float:
     """
@@ -90,7 +141,7 @@ def _get_bin_weight(bin: dict, num_samples: int) -> float:
     return weight
 
 
-def get_equal_width_bins(y_pred: np.ndarray, y_true: np.ndarray, num_classes: int, num_samples: int, num_bins: int, bins: dict) -> dict:
+def _get_equal_width_bins(y_pred: np.ndarray, y_true: np.ndarray, num_classes: int, num_samples: int, num_bins: int, bins: dict) -> dict:
     """
     Group predictions into bins of equal width.
 
@@ -127,7 +178,7 @@ def get_equal_width_bins(y_pred: np.ndarray, y_true: np.ndarray, num_classes: in
             
     return bins
 
-def get_equal_frequency_bins(y_pred: np.ndarray, y_true: np.ndarray, num_classes: int, num_samples: int, num_bins: int, bins: dict) -> dict:
+def _get_equal_frequency_bins(y_pred: np.ndarray, y_true: np.ndarray, num_classes: int, num_samples: int, num_bins: int, bins: dict) -> dict:
     """
     Group predictions into bins containing equal numbers of data points.
 
@@ -154,26 +205,26 @@ def get_equal_frequency_bins(y_pred: np.ndarray, y_true: np.ndarray, num_classes
     for i in range(num_classes):
         y_pred_class_i = y_pred[i].to_list()
         y_true_class_i = list(y_true == i)
-        y_pred_class_i_sorted, y_true_class_i_sorted = sort_predictions(y_pred_class_i, y_true_class_i)
+        y_pred_class_i_sorted, y_true_class_i_sorted = _sort_predictions(y_pred_class_i, y_true_class_i)
         # forward-fill bins up to upper bound 
-        bins = forward_fill_equal_frequency_bins(class_label=i, 
+        bins = _forward_fill_equal_frequency_bins(class_label=i, 
                                                 num_bins=num_bins, 
                                                 bins=bins, 
                                                 upper_bound_freq=upper_bound_freq, 
                                                 y_pred_class_i_sorted=y_pred_class_i_sorted, 
                                                 y_true_class_i_sorted=y_true_class_i_sorted)     
         # back-fill bins above lower bound
-        bins = back_fill_equal_frequency_bins(class_label=i,
+        bins = _back_fill_equal_frequency_bins(class_label=i,
                                             num_bins=num_bins,
                                             bins=bins,
                                             lower_bound_freq=lower_bound_freq)
         # calculate num_occurrences once bins filled satisfactorily
-        bins = sum_occurrences(class_label=i, num_bins=num_bins, bins=bins)
+        bins = _sum_occurrences(class_label=i, num_bins=num_bins, bins=bins)
     
     return bins
 
 
-def forward_fill_equal_frequency_bins(class_label: str, num_bins: int, bins: dict, upper_bound_freq: int, y_pred_class_i_sorted: list, y_true_class_i_sorted: list) -> dict:
+def _forward_fill_equal_frequency_bins(class_label: str, num_bins: int, bins: dict, upper_bound_freq: int, y_pred_class_i_sorted: list, y_true_class_i_sorted: list) -> dict:
     """
     For each bin in the given class, assign predictions until the upper limit of points per bin is reached.    
 
@@ -202,7 +253,7 @@ def forward_fill_equal_frequency_bins(class_label: str, num_bins: int, bins: dic
             bins[i][b]['occurrences'].append(y_true_class_i_sorted.pop(0))
     return bins
 
-def back_fill_equal_frequency_bins(class_label: str, num_bins: int, bins: dict, lower_bound_freq: int) -> dict:
+def _back_fill_equal_frequency_bins(class_label: str, num_bins: int, bins: dict, lower_bound_freq: int) -> dict:
     """
     Redistribute predictions between bins so that each bin contains at least a specified minimum number of samples.
 
@@ -236,7 +287,7 @@ def back_fill_equal_frequency_bins(class_label: str, num_bins: int, bins: dict, 
             bins[i][b]['occurrences'].insert(0, bins[i][b-1]['occurrences'].pop(-1))
     return bins
 
-def sum_occurrences(class_label: str, num_bins: int, bins: dict) -> dict:
+def _sum_occurrences(class_label: str, num_bins: int, bins: dict) -> dict:
     """
     For a given class, loop through the bins and find the number of occurrences of the given class in each bin.
 
@@ -257,7 +308,7 @@ def sum_occurrences(class_label: str, num_bins: int, bins: dict) -> dict:
     return bins
 
 
-def sort_predictions(y_pred_class_i: list, y_true_class_i: list) -> tuple:
+def _sort_predictions(y_pred_class_i: list, y_true_class_i: list) -> tuple:
     """
     Sort the predicted probabilities in ascending order. Sort the true labels so they correspond to the sorted predictions.
 

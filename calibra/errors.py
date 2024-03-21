@@ -2,9 +2,10 @@ import pandas as pd
 import numpy as np 
 from typing import Union
 
-from calibra.utils import bin_probabilities, _reshape_y_pred, _get_bin_weight
+from calibra.utils import bin_probabilities, _reshape_y_pred, _get_bin_weight, validate_input
 
 
+@validate_input
 def classwise_ece(
         y_pred: np.ndarray, 
         y_true: np.ndarray, 
@@ -18,7 +19,7 @@ def classwise_ece(
     Args:
         y_pred (ndarray):
             Array-like object of shape (num_samples, num_classes) where ij position is predicted probability of data point i belonging to class j.
-            Alternatively may be of shape (num_samples,) where i position is predicted probability of data point i belonging to class 1 (positive class).
+            Alternatively may be of shape (num_samples,) for binary classification where i position is predicted probability of data point i belonging to class 1 (positive class).
         y_true (ndarray):
             This 1-D array of length num_samples contains the true label for each data point.        
         num_bins (int):
