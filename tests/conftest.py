@@ -3,6 +3,8 @@ import pandas as pd
 import numpy as np 
 
 
+### test_utils.py ###
+
 @pytest.fixture
 def sort_predictions_good_input():
     """
@@ -440,6 +442,287 @@ def expected_get_equal_frequency_bins_non_integer_freq():
             }
         }
 
+
+@pytest.fixture
+def _reshape_y_pred_input():
+    return [1, 1, 1, 1]
+
+@pytest.fixture
+def _reshape_y_pred_expected():
+    y_pred = np.ones((4,2))
+    y_pred[:, 0] = 0
+    return y_pred
+
+@pytest.fixture
+def _get_bin_weight_input():
+    bin = {
+        'probs': [0.01, 0.02, 0.03],
+        'num_occurrences': 0
+    }
+    num_samples = 100
+    return bin, num_samples
+
+@pytest.fixture
+def _get_bin_weight_expected():
+    return 0.03
+
+@pytest.fixture
+def _sum_occurrences_input():
+    class_label = 0
+    num_bins = 2
+    bins = {
+        0: {
+            0: {
+                'probs': [0.01, 0.02],
+                'occurrences': [0, 0],
+            },
+
+            1: {
+                'probs': [0.5, 0.55],
+                'occurrences': [1, 1],
+            }
+
+        },
+
+        1: {
+            0: {
+                'probs': [0.45],
+                'occurrences': [0],
+            },
+
+            1: {
+                'probs': [0.5, 0.99, 0.98],
+                'occurrences': [0, 1, 1],
+            }
+
+        }
+    }
+
+    return class_label, num_bins, bins
+
+@pytest.fixture
+def _sum_occurrences_expected():
+    return {
+        0: {
+            0: {
+                'probs': [0.01, 0.02],
+                'num_occurrences': 0,
+            },
+
+            1: {
+                'probs': [0.5, 0.55],
+                'num_occurrences': 2,
+            }
+
+        },
+
+        1: {
+            0: {
+                'probs': [0.45],
+                'occurrences': [0],
+            },
+
+            1: {
+                'probs': [0.5, 0.99, 0.98],
+                'occurrences': [0, 1, 1],
+            }
+
+        }
+    }
+
+    # y_pred = np.asarray([0, 0, 1])
+    # y_true = np.asarray([0, 0, 1])
+
+# class_label, num_bins, bins, upper_bound_freq, y_pred_class_i_sorted, y_true_class_i_sorted 
+
+
+@pytest.fixture
+def _forward_fill_equal_frequency_bins_input():
+    num_classes = 2
+    class_label = 0
+    num_bins = 4
+    upper_bound_freq = 4
+    bins = {
+        i: {
+            j: {
+                'probs': [],
+                'num_occurrences': 0,
+                }
+                for j in range(num_bins)
+            } 
+            for i in range(num_classes)
+        }
+    y_pred_class_i_sorted = [0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1]
+    y_true_class_i_sorted = [0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 0, 1, 1]
+    return class_label, num_bins, bins, upper_bound_freq, y_pred_class_i_sorted, y_true_class_i_sorted
+
+@pytest.fixture
+def _forward_fill_equal_frequency_bins_expected():
+    return {
+        0: {
+            0: {
+                'probs': [0, 0, 0, 0],
+                'num_occurrences': 0,
+                'occurrences': [0, 0, 0, 1]
+            },
+
+            1: {
+                'probs': [0, 0, 0, 1],
+                'num_occurrences': 0,
+                'occurrences': [0, 0, 0, 1]
+            },
+
+            2: {
+                'probs': [1, 1, 1, 1],
+                'num_occurrences': 0,
+                'occurrences': [1, 1, 0, 1]
+            },
+            
+            3: {
+                'probs': [1],
+                'num_occurrences': 0,
+                'occurrences': [1]
+            }
+        },
+
+        1: {
+            0: {
+                'probs': [],
+                'num_occurrences': 0
+            },
+
+            1: {
+                'probs': [],
+                'num_occurrences': 0
+            },
+
+            2: {
+                'probs': [],
+                'num_occurrences': 0
+            },
+
+            3: {
+                'probs': [],
+                'num_occurrences': 0
+            }
+        }   
+    }
+
+@pytest.fixture
+def _back_fill_equal_frequency_bins_input():
+    """
+    For the sake of this unit test, we provide a bins object with just the first class forward-filled.
+    
+    In reality, all classes would be forward-filled before back-filling begins.
+    """
+    num_classes = 2
+    class_label = 0
+    num_bins = 4
+    lower_bound_freq = 3
+    bins = {
+        0: {
+            0: {
+                'probs': [0, 0, 0, 0],
+                'num_occurrences': 0,
+                'occurrences': [0, 0, 0, 1]
+            },
+
+            1: {
+                'probs': [0, 0, 0, 1],
+                'num_occurrences': 0,
+                'occurrences': [0, 0, 0, 1]
+            },
+
+            2: {
+                'probs': [1, 1, 1, 1],
+                'num_occurrences': 0,
+                'occurrences': [1, 1, 0, 1]
+            },
+            
+            3: {
+                'probs': [1],
+                'num_occurrences': 0,
+                'occurrences': [1]
+            }
+        },
+
+        1: {
+            0: {
+                'probs': [],
+                'num_occurrences': 0
+            },
+
+            1: {
+                'probs': [],
+                'num_occurrences': 0
+            },
+
+            2: {
+                'probs': [],
+                'num_occurrences': 0
+            },
+
+            3: {
+                'probs': [],
+                'num_occurrences': 0
+            }
+        }       
+    }
+    return class_label, num_bins, bins, lower_bound_freq 
+
+@pytest.fixture
+def _back_fill_equal_frequency_bins_expected():
+    return {
+        0: {
+            0: {
+                'probs': [0, 0, 0, 0],
+                'num_occurrences': 0,
+                'occurrences': [0, 0, 0, 1]
+            },
+
+            1: {
+                'probs': [0, 0, 0],
+                'num_occurrences': 0,
+                'occurrences': [0, 0, 0]
+            },
+
+            2: {
+                'probs': [1, 1, 1],
+                'num_occurrences': 0,
+                'occurrences': [1, 1, 1]
+            },
+            
+            3: {
+                'probs': [1, 1, 1],
+                'num_occurrences': 0,
+                'occurrences': [0, 1, 1]
+            }
+        },
+
+        1: {
+            0: {
+                'probs': [],
+                'num_occurrences': 0
+            },
+
+            1: {
+                'probs': [],
+                'num_occurrences': 0
+            },
+
+            2: {
+                'probs': [],
+                'num_occurrences': 0
+            },
+
+            3: {
+                'probs': [],
+                'num_occurrences': 0
+            }
+        }   
+    }
+
+### test_errors.py ###
 
 @pytest.fixture
 def classwise_ece_perfectly_calibrated_input():

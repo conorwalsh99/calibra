@@ -81,7 +81,6 @@ def _get_classwise_errors(bins: dict, num_bins: int, num_samples: int, num_class
     
     return errors
 
-      
 def _calculate_bin_deviation(bin: dict) -> float:
     """
     Calculate the deviation between the expected rate of occurrence and the actual rate of occurrence, for a given bin.

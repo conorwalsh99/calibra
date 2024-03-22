@@ -2,7 +2,16 @@ import pytest
 import pandas as pd 
 import numpy as np 
 
-from calibra.utils import bin_probabilities, _get_equal_width_bins, _get_equal_frequency_bins, _sort_predictions
+from calibra.utils import (bin_probabilities, 
+                        _get_equal_width_bins, 
+                        _get_equal_frequency_bins, 
+                        _sort_predictions, 
+                        _reshape_y_pred,
+                        _get_bin_weight,
+                        _sum_occurrences,
+                        _back_fill_equal_frequency_bins,
+                        _forward_fill_equal_frequency_bins,
+                    )
     
 
 def test_sort_predictions_good_input(sort_predictions_good_input, expected_sort_predictions_good_input):
@@ -240,3 +249,31 @@ def test_bin_probabilities_negative_y_true(get_bins_negative_y_true_input):
     """
     with pytest.raises(ValueError):
         bin_probabilities(*get_bins_negative_y_true_input)
+
+
+def test_reshape_y_pred(_reshape_y_pred_input, _reshape_y_pred_expected):
+    expected = _reshape_y_pred_expected
+    result = _reshape_y_pred(_reshape_y_pred_input)
+    assert np.allclose(result, expected), f'_reshape_y_pred returned {result} instead of {expected}.'
+
+def test_get_bin_weight(_get_bin_weight_input, _get_bin_weight_expected):
+    bin, num_samples = _get_bin_weight_input
+    result = _get_bin_weight(bin, num_samples)
+    expected = _get_bin_weight_expected
+    assert result == expected, f'_get_bin_weight returned {result} instead of {expected}.'
+
+def test_sum_occurrences(_sum_occurrences_input, _sum_occurrences_expected):
+    result = _sum_occurrences(*_sum_occurrences_input)
+    expected = _sum_occurrences_expected
+    assert result == expected, f'_sum_occurrences returned {result} instead of {expected}.'
+
+def test_forward_fill_equal_frequency_bins(_forward_fill_equal_frequency_bins_input, _forward_fill_equal_frequency_bins_expected):
+    result = _forward_fill_equal_frequency_bins(*_forward_fill_equal_frequency_bins_input)
+    expected = _forward_fill_equal_frequency_bins_expected
+    assert result == expected, f'_forward_fill_equal_frequency_bins returned {result} instead of {expected}.'
+
+def test_back_fill_equal_frequency_bins(_back_fill_equal_frequency_bins_input, _back_fill_equal_frequency_bins_expected):
+    result = _back_fill_equal_frequency_bins(*_back_fill_equal_frequency_bins_input)
+    expected = _back_fill_equal_frequency_bins_expected
+    assert result == expected, f'_back_fill_equal_frequency_bins returned {result} instead of {expected}.'
+
