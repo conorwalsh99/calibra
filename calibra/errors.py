@@ -2,10 +2,9 @@ import pandas as pd
 import numpy as np 
 from typing import Union
 
-from calibra.utils import bin_probabilities, _reshape_y_pred, _get_bin_weight, validate_input
+from calibra.utils import bin_probabilities, _reshape_y_pred, _get_bin_weight
 
 
-@validate_input
 def classwise_ece(
         y_pred: np.ndarray, 
         y_true: np.ndarray, 

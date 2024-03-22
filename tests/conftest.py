@@ -66,6 +66,133 @@ def get_bins_good_input():
     return y_pred, y_true, num_classes, num_samples, num_bins, bins
 
 @pytest.fixture
+def get_bins_y_pred_greater_than_1_input():
+    """
+    A set of predictions and corresponding labels with bad y_pred that should cause the validate_input decorator to raise an error.
+    """
+    y_pred = pd.DataFrame(
+        {
+            0: [0.95, 1.85, 0.75, 0.65, 0.55, 0.45, 0.35, 0.25, 0.15, 0.05],
+            1: [0.05, 0.15, 0.25, 0.35, 0.45, 0.55, 0.65, 0.75, 0.85, 0.95]
+        }
+    ) 
+    y_true = np.asarray([0, 0, 0, 0, 0, 1, 1, 1, 1, 1])
+    num_classes, num_samples, num_bins = 2, 10, 5
+    bins = {
+        i: {
+            j: {
+                'probs': [],
+                'num_occurrences': 0,
+                }
+                for j in range(num_bins)
+            } 
+            for i in range(num_classes)
+        }
+
+    return y_pred, y_true, num_classes, num_samples, num_bins, bins
+
+@pytest.fixture
+def get_bins_y_pred_less_than_0_input():
+    """
+    A set of predictions and corresponding labels with bad y_pred that should cause the validate_input decorator to raise an error.
+    """
+    y_pred = pd.DataFrame(
+        {
+            0: [0.95, 0.85, 0.75, 0.65, 0.55, 0.45, 0.35, 0.25, 0.15, 0.05],
+            1: [0.05, -0.15, 0.25, 0.35, 0.45, 0.55, 0.65, 0.75, 0.85, 0.95]
+        }
+    ) 
+    y_true = np.asarray([0, 0, 0, 0, 0, 1, 1, 1, 1, 1])
+    num_classes, num_samples, num_bins = 2, 10, 5
+    bins = {
+        i: {
+            j: {
+                'probs': [],
+                'num_occurrences': 0,
+                }
+                for j in range(num_bins)
+            } 
+            for i in range(num_classes)
+        }
+
+    return y_pred, y_true, num_classes, num_samples, num_bins, bins
+
+@pytest.fixture
+def get_bins_y_pred_3_dimensional_input():
+    """
+    A set of predictions and corresponding labels with bad y_pred that should cause the validate_input decorator to raise an error.
+    """
+    num_classes, num_samples, num_bins = 2, 10, 5
+    y_pred = np.zeros((2, num_samples, num_classes))
+    y_true = np.asarray([0, 0, 0, 0, 0, 1, 1, 1, 1, 1])
+    bins = {
+        i: {
+            j: {
+                'probs': [],
+                'num_occurrences': 0,
+                }
+                for j in range(num_bins)
+            } 
+            for i in range(num_classes)
+        }
+
+    return y_pred, y_true, num_classes, num_samples, num_bins, bins
+
+
+@pytest.fixture
+def get_bins_y_true_fractional_input():
+    """
+    A set of predictions and corresponding labels with bad y_true that should cause the validate_input decorator to raise an error.
+    """
+    y_pred = pd.DataFrame(
+        {
+            0: [0.95, 0.85, 0.75, 0.65, 0.55, 0.45, 0.35, 0.25, 0.15, 0.05],
+            1: [0.05, 0.15, 0.25, 0.35, 0.45, 0.55, 0.65, 0.75, 0.85, 0.95]
+        }
+    ) 
+    y_true = np.asarray([0, 0, 0, 0, 0.5, 1, 1, 1, 1, 1])
+    num_classes, num_samples, num_bins = 2, 10, 5
+    bins = {
+        i: {
+            j: {
+                'probs': [],
+                'num_occurrences': 0,
+                }
+                for j in range(num_bins)
+            } 
+            for i in range(num_classes)
+        }
+
+    return y_pred, y_true, num_classes, num_samples, num_bins, bins
+
+@pytest.fixture
+def get_bins_negative_y_true_input():
+    """
+    A set of predictions and corresponding labels with bad y_true that should cause the validate_input decorator to raise an error.
+    """
+    y_pred = pd.DataFrame(
+        {
+            0: [0.95, 0.85, 0.75, 0.65, 0.55, 0.45, 0.35, 0.25, 0.15, 0.05],
+            1: [0.05, 0.15, 0.25, 0.35, 0.45, 0.55, 0.65, 0.75, 0.85, 0.95]
+        }
+    ) 
+    y_true =np.asarray([0, 0, 0, 0, 0, -1, 1, 1, 1, 1])
+    num_classes, num_samples, num_bins = 2, 10, 5
+    bins = {
+        i: {
+            j: {
+                'probs': [],
+                'num_occurrences': 0,
+                }
+                for j in range(num_bins)
+            } 
+            for i in range(num_classes)
+        }
+
+    return y_pred, y_true, num_classes, num_samples, num_bins, bins
+
+
+@pytest.fixture
 def expected_get_equal_width_bins_good_input():
     return {
         0: {
@@ -320,7 +447,7 @@ def classwise_ece_perfectly_calibrated_input():
      Input that should result in perfect calibration.
     """
     y_pred = np.asarray([0, 0, 1])
-    y_true = [0, 0, 1]
+    y_true = np.asarray([0, 0, 1])
     return y_pred, y_true
 
 @pytest.fixture
@@ -526,3 +653,20 @@ def _get_classwise_errors_3_class_good_input_expected():
     classwise_errors = np.asarray([0.3768, 0.3775, 0.3927])
     return classwise_errors
 
+@pytest.fixture
+def classwise_ece_mismatching_lengths_input():
+    """
+     Input that should result in perfect calibration.
+    """
+    y_pred = np.asarray([0, 0, 1, 1])
+    y_true = np.asarray([0, 0, 1])
+    return y_pred, y_true
+
+@pytest.fixture
+def classwise_ece_perfectly_calibrated_y_true_list_input():
+    """
+     Input that should result in perfect calibration.
+    """
+    y_pred = np.asarray([0, 0, 1])
+    y_true = [0, 0, 1]
+    return y_pred, y_true

@@ -40,3 +40,49 @@ def test_get_classwise_errors_3_class_good_input(_get_classwise_errors_3_class_g
     result = _get_classwise_errors(bins, num_bins, num_samples, num_classes)
     expected = _get_classwise_errors_3_class_good_input_expected
     assert np.allclose(result, expected), f'_get_classwise_errors returned {result} instead of {expected}'
+
+def test_classwise_ece_perfectly_calibrated_y_true_list_input(classwise_ece_perfectly_calibrated_y_true_list_input):
+    y_pred, y_true = classwise_ece_perfectly_calibrated_y_true_list_input
+    result = classwise_ece(y_pred=y_pred, y_true=y_true, num_bins=20, method='width', return_classwise_errors=False)
+    expected = 0
+    assert result == expected, f'classwise_ece returned {result} instead of {expected}.'
+
+def test_classwise_ece_negative_num_bins(classwise_ece_perfectly_calibrated_input):
+    """
+    Error should be raised as num_bins is invalid.
+    """
+    y_pred, y_true = classwise_ece_perfectly_calibrated_input
+    with pytest.raises(ValueError):
+        classwise_ece(y_pred=y_pred, y_true=y_true, num_bins=-20, method='width', return_classwise_errors=False)
+
+def test_classwise_ece_fractional_num_bins(classwise_ece_perfectly_calibrated_input):
+    """
+    Error should be raised as num_bins is invalid.
+    """
+    y_pred, y_true = classwise_ece_perfectly_calibrated_input
+    with pytest.raises(ValueError):
+        classwise_ece(y_pred=y_pred, y_true=y_true, num_bins=16.5, method='width', return_classwise_errors=False)
+
+def test_classwise_ece_0_num_bins(classwise_ece_perfectly_calibrated_input):
+    """
+    Error should be raised as num_bins is invalid.
+    """
+    y_pred, y_true = classwise_ece_perfectly_calibrated_input
+    with pytest.raises(ValueError):
+        classwise_ece(y_pred=y_pred, y_true=y_true, num_bins=0, method='width', return_classwise_errors=False)
+
+def test_classwise_ece_invalid_method(classwise_ece_perfectly_calibrated_input):
+    """
+    Error should be raised as method is invalid.
+    """
+    y_pred, y_true = classwise_ece_perfectly_calibrated_input
+    with pytest.raises(ValueError):
+        classwise_ece(y_pred=y_pred, y_true=y_true, num_bins=20, method='length', return_classwise_errors=False)
+
+def test_classwise_ece_mismatching_lengths(classwise_ece_mismatching_lengths_input):
+    """
+    Error should be raised as y_pred and y_true lengths don't match.
+    """
+    y_pred, y_true = classwise_ece_mismatching_lengths_input
+    with pytest.raises(ValueError):
+        classwise_ece(y_pred=y_pred, y_true=y_true, num_bins=20, method='width', return_classwise_errors=False)

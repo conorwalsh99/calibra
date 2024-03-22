@@ -46,10 +46,10 @@ def test_bin_probabilities_good_input_width_1d_ypred(bin_probabilities_good_inpu
     message = f"bin_probabilities returned {result}, instead of {expected}"
     dicts_equal = True
     try:
-        for class_key in expected.keys():
+        for class_key in expected:
             expected_class_level_dict = expected[class_key]
             result_class_level_dict = result[class_key]
-            for bin_key in expected_class_level_dict.keys():
+            for bin_key in expected_class_level_dict:
                 expected_bin_level_dict = expected_class_level_dict[bin_key]
                 result_bin_level_dict = result_class_level_dict[bin_key]
                 expected_probs = expected_bin_level_dict['probs']
@@ -79,10 +79,10 @@ def test_bin_probabilities_good_input_width_2d_ypred(bin_probabilities_good_inpu
     message = f"bin_probabilities returned {result}, instead of {expected}"
     dicts_equal = True
     try:
-        for class_key in expected.keys():
+        for class_key in expected:
             expected_class_level_dict = expected[class_key]
             result_class_level_dict = result[class_key]
-            for bin_key in expected_class_level_dict.keys():
+            for bin_key in expected_class_level_dict:
                 expected_bin_level_dict = expected_class_level_dict[bin_key]
                 result_bin_level_dict = result_class_level_dict[bin_key]
                 expected_probs = expected_bin_level_dict['probs']
@@ -112,10 +112,10 @@ def test_bin_probabilities_good_input_frequency_1d_ypred(bin_probabilities_good_
     message = f"bin_probabilities returned {result}, instead of {expected}"
     dicts_equal = True
     try:
-        for class_key in expected.keys():
+        for class_key in expected:
             expected_class_level_dict = expected[class_key]
             result_class_level_dict = result[class_key]
-            for bin_key in expected_class_level_dict.keys():
+            for bin_key in expected_class_level_dict:
                 expected_bin_level_dict = expected_class_level_dict[bin_key]
                 result_bin_level_dict = result_class_level_dict[bin_key]
                 expected_probs = expected_bin_level_dict['probs']
@@ -145,10 +145,10 @@ def test_bin_probabilities_good_input_frequency_2d_ypred(bin_probabilities_good_
     message = f"bin_probabilities returned {result}, instead of {expected}"
     dicts_equal = True
     try:
-        for class_key in expected.keys():
+        for class_key in expected:
             expected_class_level_dict = expected[class_key]
             result_class_level_dict = result[class_key]
-            for bin_key in expected_class_level_dict.keys():
+            for bin_key in expected_class_level_dict:
                 expected_bin_level_dict = expected_class_level_dict[bin_key]
                 result_bin_level_dict = result_class_level_dict[bin_key]
                 expected_probs = expected_bin_level_dict['probs']
@@ -180,10 +180,10 @@ def test_get_equal_frequency_bins_non_integer_freq(get_equal_frequency_bins_non_
 
     dicts_equal = True
     try:
-        for class_key in expected.keys():
+        for class_key in expected:
             expected_class_level_dict = expected[class_key]
             result_class_level_dict = result[class_key]
-            for bin_key in expected_class_level_dict.keys():
+            for bin_key in expected_class_level_dict:
                 expected_bin_level_dict = expected_class_level_dict[bin_key]
                 result_bin_level_dict = result_class_level_dict[bin_key]
                 expected_probs = expected_bin_level_dict['probs']
@@ -205,4 +205,38 @@ def test_get_equal_frequency_bins_non_integer_freq(get_equal_frequency_bins_non_
         dicts_equal = False
 
     assert dicts_equal, message
+
+def test_bin_probabilities_y_pred_greater_than_1(get_bins_y_pred_greater_than_1_input):
+    """
+    We expect an error to be raised as the input is bad.
+    """
+    with pytest.raises(ValueError):
+        bin_probabilities(*get_bins_y_pred_greater_than_1_input)
     
+def test_bin_probabilities_y_pred_less_than_0(get_bins_y_pred_less_than_0_input):
+    """
+    We expect an error to be raised as the input is bad.
+    """
+    with pytest.raises(ValueError):
+        bin_probabilities(*get_bins_y_pred_less_than_0_input)
+
+def test_bin_probabilities_y_pred_3_dimensional(get_bins_y_pred_3_dimensional_input):
+    """
+    We expect an error to be raised as the input is bad.
+    """
+    with pytest.raises(ValueError):
+        bin_probabilities(*get_bins_y_pred_3_dimensional_input)    
+
+def test_bin_probabilities_y_true_fractional(get_bins_y_true_fractional_input):
+    """
+    We expect an error to be raised as the input is bad.
+    """
+    with pytest.raises(ValueError):
+        bin_probabilities(*get_bins_y_true_fractional_input)
+
+def test_bin_probabilities_negative_y_true(get_bins_negative_y_true_input):
+    """
+    We expect an error to be raised as the input is bad.
+    """
+    with pytest.raises(ValueError):
+        bin_probabilities(*get_bins_negative_y_true_input)

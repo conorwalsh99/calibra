@@ -14,9 +14,9 @@ def validate_input(func: Callable[..., Any]) -> Callable[..., Any]:
 
     The decorator performs the following validations:
     1. y_pred must be a 1D or 2D array with values between 0 and 1. It is converted to a NumPy array.
-    2. y_true must be a list or 1D array of non-negative integers. It is converted to a NumPy array.
+    2. y_true must be a list or 1D array of non-negative whole numbers. It is converted to a NumPy array.
     3. y_true and y_pred must have the same length.
-    4. num_bins must be a positive integer.
+    4. num_bins must be a positive whole number.
     5. method must be one of two specific string values ('width' or 'frequency').
 
     Raises:
