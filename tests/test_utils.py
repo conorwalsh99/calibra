@@ -11,6 +11,7 @@ from calibra.utils import (bin_probabilities,
                         _sum_occurrences,
                         _back_fill_equal_frequency_bins,
                         _forward_fill_equal_frequency_bins,
+                        get_classwise_bin_weights
                     )
     
 
@@ -277,3 +278,7 @@ def test_back_fill_equal_frequency_bins(_back_fill_equal_frequency_bins_input, _
     expected = _back_fill_equal_frequency_bins_expected
     assert result == expected, f'_back_fill_equal_frequency_bins returned {result} instead of {expected}.'
 
+def test_get_classwise_bin_weights(get_classwise_bin_weights_input, get_classwise_bin_weights_expected):
+    result = get_classwise_bin_weights(*get_classwise_bin_weights_input)
+    expected = get_classwise_bin_weights_expected
+    assert np.allclose(result, expected), f'get_classwise_bin_weights returned {result} instead of {expected}.'

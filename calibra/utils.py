@@ -326,3 +326,31 @@ def _sort_predictions(y_pred_class_i: list, y_true_class_i: list) -> tuple:
     y_pred_sorted, y_true_sorted = zip(*sorted_zipped_list)
 
     return list(y_pred_sorted), list(y_true_sorted)
+
+
+def get_classwise_bin_weights(bins: dict, num_bins: int, num_samples: int, num_classes: int) -> np.ndarray:
+    """
+    Calculate the 
+    Args:
+        bins (dict):
+            Dictionary containing, for each class, each bin, itself containing the predicted probabilities and occurences of the given class.                    
+        num_bins (int):
+            Number of equal-width bins the interval [0, 1] is divided into.
+        num_samples (int):
+            Number of data points.
+        num_classes (int):
+            Number of classes.
+
+    Returns:
+        np.ndarray:
+            Numpy array of shape (num_classes, num_bins) whose ijth element represents the proportion of the overall dataset whose predictions for class i lie in bin j.    
+    """    
+    weights = [
+        [
+            _get_bin_weight(bins[i][b], num_samples) for b in range(num_bins)
+        ]
+        for i in range(num_classes)
+    ]
+    
+    return np.asarray(weights)
+

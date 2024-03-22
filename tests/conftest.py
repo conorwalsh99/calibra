@@ -722,6 +722,81 @@ def _back_fill_equal_frequency_bins_expected():
         }   
     }
 
+@pytest.fixture 
+def get_classwise_bin_weights_input():
+    num_bins, num_samples, num_classes = 5, 10, 2
+    bins = {
+        0: {
+            0: {
+                'probs': [0.05, 0.15], 
+                'num_occurrences': 0,
+            },
+
+            1: {
+                'probs': [0.25, 0.35], 
+                'num_occurrences': 0,
+            },
+
+            2: {
+                'probs': [0.45, 0.55], 
+                'num_occurrences': 1,
+            },
+            
+            3: {
+                'probs': [0.65, 0.75], 
+                'num_occurrences': 2,
+            },
+
+            4: {
+                'probs': [0.85, 0.95], 
+                'num_occurrences': 2,
+            },                                
+        },
+
+        1: {
+            0: {
+                'probs': [0.05, 0.15], 
+                'num_occurrences': 0,
+            },
+
+            1: {
+                'probs': [0.25, 0.35], 
+                'num_occurrences': 0,
+            },
+
+            2: {
+                'probs': [0.45, 0.55], 
+                'num_occurrences': 1,
+            },
+            
+            3: {
+                'probs': [0.65, 0.75], 
+                'num_occurrences': 2,
+            },
+
+            4: {
+                'probs': [0.85, 0.95], 
+                'num_occurrences': 2,
+            }            
+        }
+    }
+    return bins, num_bins, num_samples, num_classes
+
+@pytest.fixture 
+def get_classwise_bin_weights_expected():
+    return np.asarray(
+        [
+            [
+                0.2, 0.2, 0.2, 0.2, 0.2
+            ],
+
+            [
+                0.2, 0.2, 0.2, 0.2, 0.2
+            ]
+        ]
+    )
+
+
 ### test_errors.py ###
 
 @pytest.fixture
