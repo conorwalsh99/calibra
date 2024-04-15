@@ -3,9 +3,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
 from matplotlib.axes import Axes
-from typing import Dict, Any, Tuple, List
+from typing import Dict, Any, Tuple, List, Union
 from matplotlib.collections import LineCollection
-from matplotlib.colors import Normalize, LinearSegmentedColormap
+from matplotlib.colors import Normalize, LogNorm, LinearSegmentedColormap
 
 from utils import bin_probabilities, get_classwise_bin_weights, _reshape_y_pred
 
@@ -58,16 +58,13 @@ class CalibrationCurve:
             Normalised rgb value for dark blue. Used as darkest shade of blue for density-based color mapping (i.e. for bins with extremely high density)
         COLORMAP (LinearSegmentedColormap):
             Color map which determines shade of blue bin segments are plotted with (depending on weight of bin).
-        NORM (Normalize):
-            Object that linearly normalises weights of bins for density-based color mapping. Here, mapping is set to [0.001, 1] -> [0, 1].
     """
 
     LIGHT_BLUE = np.array([173, 216, 230]) / 255.0
-    DARK_BLUE = np.array([4, 2, 115]) / 255.0
+    DARK_BLUE = np.array([4, 12, 115]) / 255.0 
     COLORMAP = LinearSegmentedColormap.from_list(
         "light_to_dark_blue", [LIGHT_BLUE, DARK_BLUE]
     )
-    NORM = Normalize(vmin=0.001, vmax=1)
 
     def __init__(
         self,
@@ -199,7 +196,7 @@ class CalibrationCurve:
                 -> check if centre already in x_new (if centre coincides with start boundary - end boundary of previous bin - this will be the case)
                     -> if not, add centre, weight to x_new, w_new
                 -> add end boundary, weight to x_new, w_new
-            -> add centre of final bin to x_new
+            -> add centre, weight of final bin to x_new, w_new
 
         Args:
             x (List[float]):
@@ -232,6 +229,7 @@ class CalibrationCurve:
             x_new.append(bin_end_boundary)
             w_new.append(bin_weight)
         x_new.append(x[-1])
+        w_new.append(weights[-1])
 
         return x_new, w_new
 
@@ -317,7 +315,7 @@ class CalibrationCurve:
         return x_new, y_new, weights_new
 
     def _get_density_based_line_collection(
-        self, x: List[float], y: List[float], weights: List[float]
+        self, x: List[float], y: List[float], weights: List[float], normalizer: Union[LogNorm, Normalize]
     ) -> LineCollection:
         """Get collections of lines to plot calibration curve. Each line in the collection represents either half a bin, or a full bin
         along the calibration curve. The color of each line represents the density (weight) of the given bin.
@@ -335,6 +333,9 @@ class CalibrationCurve:
         adjusted_x, adjusted_y, adjusted_weights = (
             self._generate_x_y_with_bin_boundaries(x, y, weights)
         )
+
+        print(adjusted_weights)
+
         segments = np.array(
             [
                 [[adjusted_x[i], adjusted_y[i]], [adjusted_x[i + 1], adjusted_y[i + 1]]]
@@ -344,13 +345,35 @@ class CalibrationCurve:
         return LineCollection(
             segments,
             cmap=CalibrationCurve.COLORMAP,
-            norm=CalibrationCurve.NORM,
+            norm=normalizer,
             array=adjusted_weights,
             linewidth=2,
         )
 
+    def _configure_show_density_settings(self, show_density: bool = False, normalization_type: str = 'log', vmin: float = 0.01, vmax: float = 1) -> Tuple[bool, Union[LogNorm, Normalize]]:
+        
+        if self.method == "frequency":
+            show_density = False
+            warnings.warn(
+                """Density-based color mapping not available when method=='frequency', as bins do not have well-defined boundaries.  
+                        In any case, equal frequency bins have equal density, by definition. Setting show_density='False'."""
+            )
+
+        if normalization_type not in ['log', 'linear']:
+            raise ValueError("normalization_type must be either 'log' or 'linear'")
+
+        if vmin > vmax or vmin < 0 or vmax > 1:
+            raise ValueError("vmin must be bounded between 0 and vmax, vmax must be bounded between vmin and 1.")
+
+        if normalization_type == 'log':
+            normalizer = LogNorm(vmin=vmin, vmax=vmax)
+        elif normalization_type == 'linear':
+            normalizer = Normalize(vmin=vmin, vmax=vmax)
+
+        return show_density, normalizer
+
     def plot(
-        self, class_label: int = 0, show_density: bool = False, **kwargs: Dict[str, Any]
+        self, class_label: int = 0, show_density: bool = False, normalization_type: str = 'log', vmin: float = 0.01, vmax: float = 1, **kwargs: Dict[str, Any]
     ) -> Tuple[Figure, Axes]:
         """
         Generate and plot the calibration curve for the specified class. Accepts matplotlib.pyplot.plot keyword arguments for customisation.
@@ -363,13 +386,9 @@ class CalibrationCurve:
                 Defaults to False.
             **kwargs (Dict[str, Any]):
                 matplotlib keyword arguments for customising the plot.
-        """
-        if self.method == "frequency" and show_density:
-            show_density = False
-            warnings.warn(
-                """Density-based color mapping not available when method=='frequency', as bins do not have well-defined boundaries.  
-                          In any case, equal frequency bins have equal density, by definition. Setting show_density='False'."""
-            )
+        """        
+        if show_density:
+            show_density, normalizer = self._configure_show_density_settings(show_density, normalization_type, vmin, vmax)
 
         fig, ax = plt.subplots()
         ax.plot(
@@ -379,14 +398,14 @@ class CalibrationCurve:
 
         for x, y, weights in zip(x_segments, y_segments, weight_segments):
             if show_density and len(x) > 1:
-                lc = self._get_density_based_line_collection(x, y, weights)
+                lc = self._get_density_based_line_collection(x, y, weights, normalizer)
                 ax.add_collection(lc)
             elif show_density and len(x) == 1:
                 ax.plot(
                     x,
                     y,
                     "o",
-                    color=CalibrationCurve.COLORMAP(CalibrationCurve.NORM(weights[0])),
+                    color=CalibrationCurve.COLORMAP(normalizer(weights[0])),
                 )
             else:
                 ax.plot(x, y, **kwargs)
