@@ -89,7 +89,7 @@ class CalibrationCurve:
 
     def _segment_curve_data(
         self, x: List[float], y: List[float], weights: np.ndarray
-    ) -> Tuple[List[List[float]], List[List[float]]]:
+    ) -> Tuple[List[List[float]], List[List[float]], List[List[float]]]:
         """Generate continuous segments of the non-empty bins to plot in the calibration curve.
 
         Args:
@@ -101,7 +101,7 @@ class CalibrationCurve:
                 List containing proportion of predictions residing in each bin.
 
         Returns:
-            List[list]
+            Tuple[List[List[float]], List[List[float]], List[List[float]]]
         """
         segments = []
         current_segment = {"x": [], "y": [], "weight": []}
@@ -128,17 +128,18 @@ class CalibrationCurve:
 
     def _generate_x_y(
         self, class_label: int = 0
-    ) -> Tuple[List[List[float]], List[List[float]]]:
+    ) -> Tuple[List[List[float]], List[List[float]], List[List[float]]]:
         """
-        Generates the x and y values for the calibration curve based on provided predictions, true labels, and class.
+        Generate x and y values to be plotted as calibration curve based on provided predictions, true labels, and class.
+        Also return weights of each bin, in case calibration curve is plotted with density-based color mapping.
 
         Args:
             class_label (int):
                 Label of the class whose calibration curve is plotted. Defaults to 0 (the first class).
 
         Returns:
-            Tuple[List[List[float]], List[List[float]]]:
-                Lists of lists of x and y values to be plotted. Need to use sublists in case curve is discontinuous (and therefore plotted in individual segments).
+            Tuple[List[List[float]], List[List[float]], List[List[float]]]:
+                Lists of lists of x and y values to be plotted along with corresponding weights for each bin. Need to use sublists in case curve is discontinuous (and therefore plotted in individual segments).
         """
         class_i_bins = self.bins[class_label]
         x, y = [], []
@@ -159,28 +160,60 @@ class CalibrationCurve:
             return self._segment_curve_data(x, y, weights)
 
     def _add_bin_boundaries_to_x(self, x, weights) -> Tuple[List[float], List[float]]:
-        """
-        x is list of expected frequencies for each bin. In addition to this value (which can lie anywhere within bin), get boundaries of bin
-        and add to list. Also return list of weights with new entries to correspond to updated x.
-        """
-        x_new = [x[0]]
-        weights_new = [weights[0]]
+        """        
+        For continuous x segment to be plotted, (where each value represents the expected frequency or 'centre' of a given bin), get x value at end boundary of each bin and add to list.
+        Consecutive pairs of values in updated x list now represent half of a bin (i.e. start to centre, or centre to end).
+        Get new array of weights so that values correspond to new x values list i.e. each full bin in x should have its weight entered twice (consecutively) in weights, for half bins.
+        
+        PROBLEM:
+            When show_density == False we plot the curve using the bin 'centres' (expected frequencies) as the x values, and the actual frequencies as the y values.
+            When show_density == True, we want to plot this same curve, but color each bin segment according to its weight. If we plotted this using the same x and y values as before,
+            each segment would go from the centre of one bin to the centre of the next. Coloring the segments by the corresponding bin  weight, the first half of each bin
+            would be colored by the weight of the previous bin, and only the second half would be correctly colored according to the weight of the bin. 
 
-        if len(x) > 1:
-            for bin_expected_freq, bin_weight in zip(x[1:-1], weights[1:-1]):
+        To ensure each bin segment is colored correctly, we need to plot two segments for each bin - from the start to the centre, and from the centre to the end. 
+        We also need to ensure the bin's weight is associated with both segments.
+        
+        Therefore, we will create a new array of x values (x_new) containing values for the start, centre and end of each bin, and a new array  of the weights (w_new) containing 
+        two weight entries for each full bin.
+        
+        The only exceptions to this are the first bin, for which we only need to include its centre and endpoint in the x_new, (as the original calibration curve plot begins from this point)
+        and the final bin, for which we only need to include the start and centre (as the original calibration curve plot finishes at its centre). 
+        Similarly, the weights of the first and final bins only need to be entered in w_new once.
+        
+        The only other exception is for whose 'centre' (expected frequency) coincides with their start boundary. In this case we only include this point once
+        in x_new, and similarly, only include its weight once in the w_new (as we can simply plot the whole bin in one segment, start to finish).
+
+        pseduo-code:
+        
+        -> if only one point, return as is 
+        
+        -> else:
+            -> add centre, weight of first bin to x_new, w_new
+            -> add end boundary of first bin to x_new
+            -> for remaining bins up to but excluding final bin:
+                -> check if centre already in x_new (if centre coincides with start boundary - end boundary of previous bin - this will be the case)                
+                    -> if not, add centre, weight to x_new, w_new
+                -> add end boundary, weight to x_new, w_new
+            -> add centre of final bin to x_new             
+        """        
+        if len(x) == 1:
+            return x, weights
+                
+        x_new, w_new = [x[0]], [weights[0]]        
+        first_bin_end_boundary = list(filter(lambda boundary: boundary > x[0], self.bin_boundaries))[0]
+        x_new.append(first_bin_end_boundary)
+
+        for bin_expected_freq, bin_weight in zip(x[1:-1], weights[1:-1]):
+            if bin_expected_freq not in x_new:
                 x_new.append(bin_expected_freq)
-                boundaries_after_this_point = [
-                    boundary
-                    for boundary in self.bin_boundaries
-                    if boundary > bin_expected_freq
-                ]
-                bin_boundary = boundaries_after_this_point[0]
-                x_new.append(bin_boundary)
-                weights_new.append(bin_weight)
-                weights_new.append(bin_weight)
-            x_new.append(x[-1])
+                w_new.append(bin_weight)
+            bin_end_boundary = list(filter(lambda boundary: boundary > bin_expected_freq, self.bin_boundaries))[0] 
+            x_new.append(bin_end_boundary)
+            w_new.append(bin_weight)
+        x_new.append(x[-1])
 
-        return x_new, weights_new
+        return x_new, w_new
 
     def _get_y_at_bin_centre(self, x, x_new, y, i):
         """Get actual frequency for bin in question (y value at this bin's 'centre' for plotting purposes).
