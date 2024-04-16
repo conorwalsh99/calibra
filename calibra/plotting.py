@@ -57,11 +57,10 @@ class CalibrationCurve:
         DARK_BLUE (np.ndarray):
             Normalised rgb value for dark blue. Used as darkest shade of blue for density-based color mapping (i.e. for bins with extremely high density)
         COLORMAP (LinearSegmentedColormap):
-            Color map which determines shade of blue bin segments are plotted with (depending on weight of bin).
+            Color map which determines shade of blue the bin segments are plotted with (depending on weight of bin).
     """
-
     LIGHT_BLUE = np.array([173, 216, 230]) / 255.0
-    DARK_BLUE = np.array([4, 12, 115]) / 255.0 
+    DARK_BLUE = np.array([4, 12, 115]) / 255.0
     COLORMAP = LinearSegmentedColormap.from_list(
         "light_to_dark_blue", [LIGHT_BLUE, DARK_BLUE]
     )
@@ -315,15 +314,24 @@ class CalibrationCurve:
         return x_new, y_new, weights_new
 
     def _get_density_based_line_collection(
-        self, x: List[float], y: List[float], weights: List[float], normalizer: Union[LogNorm, Normalize]
+        self,
+        x: List[float],
+        y: List[float],
+        weights: List[float],
+        normalizer: Union[LogNorm, Normalize],
     ) -> LineCollection:
         """Get collections of lines to plot calibration curve. Each line in the collection represents either half a bin, or a full bin
-        along the calibration curve. The color of each line represents the density (weight) of the given bin.
+        along the calibration curve. The color of each line is a function of the density (weight) of the given bin.
 
         Args:
             x (List[float]): List of expected frequencies of each bin ('centre' of bin) along given segment of the calibration curve.
             y (List[float]): List of actual frequencies of each bin along given segment of the calibration curve.
             weights (List[float]): List of weights corresponding to each bin along given segment of the calibration curve.
+            normalizer (Union[Normalize, LogNorm]): A function that scales bin weights from the specified range [vmin, vmax] in the plot() method to a normalized range [0, 1]. 
+                Values outside of [vmin, vmax] are clamped at 0 or 1. This normalized range is then used for density-based color mapping. The normalization can be either logarithmic or linear:
+                - Linear normalization (Normalize) scales values directly proportionate to their distance between vmin and vmax.
+                - Logarithmic normalization (LogNorm) emphasizes differences in lower ranges by scaling the logarithm of values, making subtle variations in lower densities more visible.
+                Defaults to LogNorm.
 
         Returns:
             LineCollection:
@@ -350,8 +358,33 @@ class CalibrationCurve:
             linewidth=2,
         )
 
-    def _configure_show_density_settings(self, show_density: bool = False, normalization_type: str = 'log', vmin: float = 0.01, vmax: float = 1) -> Tuple[bool, Union[LogNorm, Normalize]]:
+    def _configure_show_density_settings(
+        self,
+        show_density: bool = False,
+        normalization_type: str = "log",
+        vmin: float = 0.01,
+        vmax: float = 1,
+    ) -> Tuple[bool, Union[LogNorm, Normalize]]:
+        """
+        Validate and configure inputs related to color mapping of calibration curve when show_density == True.
+
+        Ensure normalization_type, vmin and vmax values are valid. If binning method == 'frequency', show user warning message and set show_density to False. 
+
+        Args:
+            show_density (bool):
+                If True, the color strength of the curve is a function of the bin density at each point.
+                Defaults to False.
+            normalization_type (str):
+                Indicates method for scaling bin weights. These weights can be scaled either linearly or logarithmically from [vmin, vmax] to [0, 1] (with values 
+                outside of [vmin, vmax] being clamped to 0 or 1).
+            vmin (float): 
+                The minimum value used for normalization, setting the lower bound of the data range that maps to the lower end of the colormap.
+            vmax (float):
+                The maximum value used for normalization, defining the upper bound of the data range that maps to the upper end of the colormap.
         
+        Returns:
+            Tuple[bool, Union[LogNorm, Normalize]]
+        """
         if self.method == "frequency":
             show_density = False
             warnings.warn(
@@ -359,24 +392,32 @@ class CalibrationCurve:
                         In any case, equal frequency bins have equal density, by definition. Setting show_density='False'."""
             )
 
-        if normalization_type not in ['log', 'linear']:
+        if normalization_type not in ["log", "linear"]:
             raise ValueError("normalization_type must be either 'log' or 'linear'")
 
         if vmin > vmax or vmin < 0 or vmax > 1:
-            raise ValueError("vmin must be bounded between 0 and vmax, vmax must be bounded between vmin and 1.")
+            raise ValueError(
+                "vmin must be bounded between 0 and vmax, vmax must be bounded between vmin and 1."
+            )
 
-        if normalization_type == 'log':
+        if normalization_type == "log":
             normalizer = LogNorm(vmin=vmin, vmax=vmax)
-        elif normalization_type == 'linear':
+        elif normalization_type == "linear":
             normalizer = Normalize(vmin=vmin, vmax=vmax)
 
         return show_density, normalizer
 
     def plot(
-        self, class_label: int = 0, show_density: bool = False, normalization_type: str = 'log', vmin: float = 0.01, vmax: float = 1, **kwargs: Dict[str, Any]
+        self,
+        class_label: int = 0,
+        show_density: bool = False,
+        normalization_type: str = "log",
+        vmin: float = 0.01,
+        vmax: float = 1,
+        **kwargs: Dict[str, Any]
     ) -> Tuple[Figure, Axes]:
         """
-        Generate and plot the calibration curve for the specified class. Accepts matplotlib.pyplot.plot keyword arguments for customisation.
+        Plot the calibration curve for the specified class. Accepts matplotlib.pyplot.plot keyword arguments for customisation of plot.
 
         Args:
             class_label (int):
@@ -386,9 +427,14 @@ class CalibrationCurve:
                 Defaults to False.
             **kwargs (Dict[str, Any]):
                 matplotlib keyword arguments for customising the plot.
-        """        
+        
+        Returns:
+            Tuple[Figure, Axes]
+        """
         if show_density:
-            show_density, normalizer = self._configure_show_density_settings(show_density, normalization_type, vmin, vmax)
+            show_density, normalizer = self._configure_show_density_settings(
+                show_density, normalization_type, vmin, vmax
+            )
 
         fig, ax = plt.subplots()
         ax.plot(
