@@ -7,7 +7,7 @@ from typing import Dict, Any, Tuple, List, Union
 from matplotlib.collections import LineCollection
 from matplotlib.colors import Normalize, LogNorm, LinearSegmentedColormap
 
-from utils import bin_probabilities, get_classwise_bin_weights, _reshape_y_pred
+from calibra.utils import bin_probabilities, get_classwise_bin_weights, _reshape_y_pred
 
 
 class CalibrationCurve:
@@ -64,6 +64,7 @@ class CalibrationCurve:
     COLORMAP = LinearSegmentedColormap.from_list(
         "light_to_dark_blue", [LIGHT_BLUE, DARK_BLUE]
     )
+    EPSILON = 1e-8
 
     def __init__(
         self,
@@ -85,8 +86,9 @@ class CalibrationCurve:
         )
         self.bin_boundaries = list(np.linspace(0, 1, self.num_bins + 1))
 
+    @staticmethod
     def _segment_curve_data(
-        self, x: List[float], y: List[float], weights: np.ndarray
+        x: List[float], y: List[float], weights: np.ndarray
     ) -> Tuple[List[List[float]], List[List[float]], List[List[float]]]:
         """Generate continuous segments of the non-empty bins to plot in the calibration curve.
 
@@ -155,7 +157,7 @@ class CalibrationCurve:
         if None not in x:
             return [x], [y], [weights]
         else:
-            return self._segment_curve_data(x, y, weights)
+            return CalibrationCurve._segment_curve_data(x, y, weights)
 
     def _add_bin_boundaries_to_x(
         self, x: List[float], weights: List[float]
@@ -195,7 +197,10 @@ class CalibrationCurve:
                 -> check if centre already in x_new (if centre coincides with start boundary - end boundary of previous bin - this will be the case)
                     -> if not, add centre, weight to x_new, w_new
                 -> add end boundary, weight to x_new, w_new
-            -> add centre, weight of final bin to x_new, w_new
+            -> for final bin, check if centre already in x_new (this will be the case if the segment consists of two bins, and the centre of the second bin coincides with the start of the bin)
+                -> if not, add centre, weight of final bin to x_new, w_new
+                
+        Note: For equality checks, we may include tolerance EPSILON to account for floating point errors.
 
         Args:
             x (List[float]):
@@ -212,28 +217,32 @@ class CalibrationCurve:
 
         x_new, w_new = [x[0]], [weights[0]]
         first_bin_end_boundary = list(
-            filter(lambda boundary: boundary > x[0], self.bin_boundaries)
+            filter(lambda boundary: boundary - CalibrationCurve.EPSILON > x[0], self.bin_boundaries)
         )[0]
         x_new.append(first_bin_end_boundary)
 
         for bin_expected_freq, bin_weight in zip(x[1:-1], weights[1:-1]):
-            if bin_expected_freq not in x_new:
+            already_in_x_new = list(filter(lambda x: abs(x - bin_expected_freq) < CalibrationCurve.EPSILON, x_new))
+            if not already_in_x_new:
                 x_new.append(bin_expected_freq)
                 w_new.append(bin_weight)
             bin_end_boundary = list(
                 filter(
-                    lambda boundary: boundary > bin_expected_freq, self.bin_boundaries
+                    lambda boundary: boundary - CalibrationCurve.EPSILON > bin_expected_freq, self.bin_boundaries
                 )
             )[0]
             x_new.append(bin_end_boundary)
             w_new.append(bin_weight)
-        x_new.append(x[-1])
-        w_new.append(weights[-1])
+
+        if x[-1] not in x_new:     
+            x_new.append(x[-1])
+            w_new.append(weights[-1])
 
         return x_new, w_new
 
+    @staticmethod
     def _get_y_at_bin_centre(
-        self, x: List[float], x_new: List[float], y: List[float], i: int
+        x: List[float], x_new: List[float], y: List[float], i: int
     ) -> float:
         """Get actual frequency for bin in question (y value at this bin's 'centre') for plotting purposes.
 
@@ -250,8 +259,9 @@ class CalibrationCurve:
         bin_expected_freq_original_index = x.index(bin_expected_freq)
         return y[bin_expected_freq_original_index]
 
+    @staticmethod
     def _get_y_at_bin_boundary(
-        self, x: List[float], x_new: List[float], y: List[float], i: int
+        x: List[float], x_new: List[float], y: List[float], i: int
     ) -> float:
         """Get interpolated frequency at end boundary of bin in question.
 
@@ -341,9 +351,6 @@ class CalibrationCurve:
         adjusted_x, adjusted_y, adjusted_weights = (
             self._generate_x_y_with_bin_boundaries(x, y, weights)
         )
-
-        print(adjusted_weights)
-
         segments = np.array(
             [
                 [[adjusted_x[i], adjusted_y[i]], [adjusted_x[i + 1], adjusted_y[i + 1]]]
