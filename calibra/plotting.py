@@ -396,7 +396,7 @@ class CalibrationCurve:
             show_density = False
             warnings.warn(
                 """Density-based color mapping not available when method=='frequency', as bins do not have well-defined boundaries.  
-                        In any case, equal frequency bins have equal density, by definition. Setting show_density='False'."""
+                        In any case, equal frequency bins have equal density, by definition. Setting show_density='False'.""", UserWarning
             )
 
         if normalization_type not in ["log", "linear"]:

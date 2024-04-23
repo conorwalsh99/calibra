@@ -1160,3 +1160,18 @@ def _generate_x_y_with_bin_boundaries_two_values_expected():
     y_new = [0.1, 0.24]
     weights_new = [0.1]
     return x_new, y_new, weights_new
+
+@pytest.fixture
+def _get_density_based_line_collection_segment_start_boundaries():
+    """Rather than generate an expected LineCollection object, it is easier to ensure the segments are as we expect them to be in terms of (half-) bin boundaries and associated weights"""
+    return [0.04, 0.1, 0.12, 0.2, 0.27, 0.3, 0.33, 0.4, 0.45, 0.5, 0.55, 0.6, 0.68, 0.7, 0.73, 0.8, 0.84, 0.9]
+
+@pytest.fixture
+def _get_density_based_line_collection_segment_end_boundaries():
+    """Rather than generate an expected LineCollection object, it is easier to ensure the segments are as we expect them to be in terms of (half-) bin boundaries and associated weights"""
+    return [0.1, 0.12, 0.2, 0.27, 0.3, 0.33, 0.4, 0.45, 0.5, 0.55, 0.6, 0.68, 0.7, 0.73, 0.8, 0.84, 0.9, 0.96]
+
+@pytest.fixture
+def _get_density_based_line_collection_segment_weights():
+    """Rather than generate an expected LineCollection object, it is easier to ensure the segments are as we expect them to be in terms of (half-) bin boundaries and associated weights"""
+    return [0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1]
