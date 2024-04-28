@@ -56,6 +56,7 @@ plt.title('Calibration Curve')
 plt.legend()
 ```
 
+![output](random_forest_calibration_curve_example.png)
 
 4. Features
 
@@ -95,4 +96,14 @@ Each of these sections helps make your README comprehensive, ensuring users unde
 
 
 
+
+# TODO
+1. Add documentation (clean up README.md, including equation for class-wise ECE and cite paper (maybe ths would be better placed in errors.py documentation?) coverage [and other] badges to Github)
+2. Package (add poetry or requirements.txt for dependency management, ensure works under specific versions, bump version and republish to pypi)
+GITHUB:
+3. Add pre-commit hooks (unit tests pass, black style used etc.)
+4. Think about open source collaboration strategy (pre-commit hooks, admin rights, PR strategies)
+5. Publicise (Linkedin post into machine learning community, medium article)
+
+6. BUG: when show_density=True, we are not calling plt.plot(**kwargs). Therefore we cannot dispay the labels directly in this case. 
 
