@@ -47,6 +47,8 @@ These default values can be adjusted by changing the 'num_bins' and 'method' par
 Users can also visualise the calibration of their models by plotting calibration curves:
 
 ```
+# y_pred_proba, y_true different to those in previous example
+
 import matplotlib.pyplot as plt
 from calibra.plotting import CalibrationCurve
 
@@ -98,7 +100,7 @@ Each of these sections helps make your README comprehensive, ensuring users unde
 
 
 # TODO
-1. Add documentation (clean up README.md, including equation for class-wise ECE and cite paper (maybe ths would be better placed in errors.py documentation?) coverage [and other] badges to Github)
+1. Add documentation (clean up README.md, provide output for example classwise_ece, maybe plot curve for same example for consistency? Or ensure it refers to new example. coverage [and other] badges to Github)
 2. Package (add poetry or requirements.txt for dependency management, ensure works under specific versions, bump version and republish to pypi)
 GITHUB:
 3. Add pre-commit hooks (unit tests pass, black style used etc.)
