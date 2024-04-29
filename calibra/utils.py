@@ -1,7 +1,7 @@
 import math
 import pandas as pd
 import numpy as np
-from typing import Callable, Any, List
+from typing import Callable, Any
 from functools import wraps
 
 
@@ -63,10 +63,10 @@ def bin_probabilities(y_pred: np.ndarray, y_true: np.ndarray, num_bins: int = 20
     Group predictions into bins, along with corresponding true labels.
     
     Args:
-        y_pred (ndarray):
+        y_pred (np.ndarray):
             Array-like object of shape (num_samples, num_classes) where ij position is predicted probability of data point i belonging to class j.
             Alternatively may be of shape (num_samples,) for binary classification where i position is predicted probability of data point i belonging to class 1 (positive class).
-        y_true (ndarray):
+        y_true (np.ndarray):
             This 1-D array of length num_samples contains the true label for each data point.        
         num_bins (int):
             Number of bins the interval [0, 1] is divided into. Exact if method='width', approximate if method='frequency'.
@@ -106,12 +106,12 @@ def _reshape_y_pred(y_pred: np.ndarray) -> np.ndarray:
     If y_pred is a 1D array, reshape to (num_samples, num_classes)
 
     Args:
-        y_pred (ndarray):
+        y_pred (np.ndarray):
             Array-like object of shape (num_samples, num_classes) where ij position is predicted probability of data point i belonging to class j.
             Alternatively may be of shape (num_samples,) for binary classification where i position is predicted probability of data point i belonging to class 1 (positive class).
 
     Returns:
-        ndarray
+        np.ndarray
     """
     if np.asarray(y_pred).ndim == 1:
         y_pred = np.asarray(
@@ -146,9 +146,9 @@ def _get_equal_width_bins(y_pred: np.ndarray, y_true: np.ndarray, num_classes: i
     Group predictions into bins of equal width.
 
     Args:
-        y_pred (ndarray):
+        y_pred (np.ndarray):
             Array-like object of shape (num_samples, num_classes) where ij position is predicted probability of data point i belonging to class j.
-        y_true (ndarray):
+        y_true (np.ndarray):
             This 1-D array of length num_samples contains the true label for each data point.
         num_classes (int):
             Number of classes.        
@@ -173,8 +173,8 @@ def _get_equal_width_bins(y_pred: np.ndarray, y_true: np.ndarray, num_classes: i
             ) 
         # returns num_bins-1 if p==1, else returns m for p in [m/num_bins, (m+1)/num_bins) 
         for j in range(num_samples): 
-            bins[i][bin_index[j]]['probs'].append(y_pred_class_i[j]) # group predicted probabilities into the bins
-            bins[i][bin_index[j]]['num_occurrences'] += y_true_class_i[j] # keep track of the number of occurrences of class i in each bin
+            bins[i][bin_index[j]]['probs'].append(y_pred_class_i[j]) 
+            bins[i][bin_index[j]]['num_occurrences'] += y_true_class_i[j] 
             
     return bins
 
@@ -183,9 +183,9 @@ def _get_equal_frequency_bins(y_pred: np.ndarray, y_true: np.ndarray, num_classe
     Group predictions into bins containing equal numbers of data points.
 
     Args:
-        y_pred (ndarray):
+        y_pred (np.ndarray):
             Array-like object of shape (num_samples, num_classes) where ij position is predicted probability of data point i belonging to class j.
-        y_true (ndarray):
+        y_true (np.ndarray):
             This 1-D array of length num_samples contains the true label for each data point.
         num_classes (int):
             Number of classes.        
@@ -313,9 +313,9 @@ def _sort_predictions(y_pred_class_i: list, y_true_class_i: list) -> tuple:
     Sort the predicted probabilities in ascending order. Sort the true labels so they correspond to the sorted predictions.
 
     Args:
-        y_pred_class_i (ndarray):
+        y_pred_class_i (np.ndarray):
             Array-like object of shape (num_samples,) where i position is predicted probability of data point i belonging to given class.
-        y_true_class_i (ndarray):
+        y_true_class_i (np.ndarray):
             1-D array of length num_samples, where i position is 1 if data point i belongs to given class, 0 otherwise.
     
     Returns:

@@ -55,6 +55,7 @@ class CalibrationCurve:
         COLORMAP (LinearSegmentedColormap):
             Color map which determines shade of blue the bin segments are plotted with (depending on weight of bin).
     """
+
     LIGHT_BLUE = np.array([173, 216, 230]) / 255.0
     DARK_BLUE = np.array([4, 12, 115]) / 255.0
     COLORMAP = LinearSegmentedColormap.from_list(
@@ -72,7 +73,7 @@ class CalibrationCurve:
         self.y_pred = _reshape_y_pred(y_pred)
         self.y_true = y_true
         self.num_bins = num_bins
-        self.method = method        
+        self.method = method
         self.bins = bin_probabilities(
             self.y_pred, self.y_true, self.num_bins, self.method
         )
@@ -192,7 +193,7 @@ class CalibrationCurve:
                 -> add end boundary, weight to x_new, w_new
             -> for final bin, check if centre already in x_new (this will be the case if the segment consists of two bins, and the centre of the second bin coincides with the start of the bin)
                 -> if not, add centre, weight of final bin to x_new, w_new
-                
+
         Note: For equality checks, we may include tolerance EPSILON to account for floating point errors.
 
         Args:
@@ -210,24 +211,34 @@ class CalibrationCurve:
 
         x_new, w_new = [x[0]], [weights[0]]
         first_bin_end_boundary = list(
-            filter(lambda boundary: boundary - CalibrationCurve.EPSILON > x[0], self.bin_boundaries)
+            filter(
+                lambda boundary: boundary - CalibrationCurve.EPSILON > x[0],
+                self.bin_boundaries,
+            )
         )[0]
         x_new.append(first_bin_end_boundary)
 
         for bin_expected_freq, bin_weight in zip(x[1:-1], weights[1:-1]):
-            already_in_x_new = list(filter(lambda x: abs(x - bin_expected_freq) < CalibrationCurve.EPSILON, x_new))
+            already_in_x_new = list(
+                filter(
+                    lambda x: abs(x - bin_expected_freq) < CalibrationCurve.EPSILON,
+                    x_new,
+                )
+            )
             if not already_in_x_new:
                 x_new.append(bin_expected_freq)
                 w_new.append(bin_weight)
             bin_end_boundary = list(
                 filter(
-                    lambda boundary: boundary - CalibrationCurve.EPSILON > bin_expected_freq, self.bin_boundaries
+                    lambda boundary: boundary - CalibrationCurve.EPSILON
+                    > bin_expected_freq,
+                    self.bin_boundaries,
                 )
             )[0]
             x_new.append(bin_end_boundary)
             w_new.append(bin_weight)
 
-        if x[-1] not in x_new:     
+        if x[-1] not in x_new:
             x_new.append(x[-1])
             w_new.append(weights[-1])
 
@@ -330,7 +341,7 @@ class CalibrationCurve:
             x (List[float]): List of expected frequencies of each bin ('centre' of bin) along given segment of the calibration curve.
             y (List[float]): List of actual frequencies of each bin along given segment of the calibration curve.
             weights (List[float]): List of weights corresponding to each bin along given segment of the calibration curve.
-            normalizer (Union[Normalize, LogNorm]): A function that scales bin weights from the specified range [vmin, vmax] in the plot() method to a normalized range [0, 1]. 
+            normalizer (Union[Normalize, LogNorm]): A function that scales bin weights from the specified range [vmin, vmax] in the plot() method to a normalized range [0, 1].
                 Values outside of [vmin, vmax] are clamped at 0 or 1. This normalized range is then used for density-based color mapping. The normalization can be either logarithmic or linear:
                 - Linear normalization (Normalize) scales values directly proportionate to their distance between vmin and vmax.
                 - Logarithmic normalization (LogNorm) emphasizes differences in lower ranges by scaling the logarithm of values, making subtle variations in lower densities more visible.
@@ -368,20 +379,20 @@ class CalibrationCurve:
         """
         Validate and configure inputs related to color mapping of calibration curve when show_density == True.
 
-        Ensure normalization_type, vmin and vmax values are valid. If binning method == 'frequency', show user warning message and set show_density to False. 
+        Ensure normalization_type, vmin and vmax values are valid. If binning method == 'frequency', show user warning message and set show_density to False.
 
         Args:
             show_density (bool):
                 If True, the color strength of the curve is a function of the bin density at each point.
                 Defaults to False.
             normalization_type (str):
-                Indicates method for scaling bin weights. These weights can be scaled either linearly or logarithmically from [vmin, vmax] to [0, 1] (with values 
+                Indicates method for scaling bin weights. These weights can be scaled either linearly or logarithmically from [vmin, vmax] to [0, 1] (with values
                 outside of [vmin, vmax] being clamped to 0 or 1).
-            vmin (float): 
+            vmin (float):
                 The minimum value used for normalization, setting the lower bound of the data range that maps to the lower end of the colormap.
             vmax (float):
                 The maximum value used for normalization, defining the upper bound of the data range that maps to the upper end of the colormap.
-        
+
         Returns:
             Tuple[bool, Union[LogNorm, Normalize]]
         """
@@ -389,7 +400,8 @@ class CalibrationCurve:
             show_density = False
             warnings.warn(
                 """Density-based color mapping not available when method=='frequency', as bins do not have well-defined boundaries.  
-                        In any case, equal frequency bins have equal density, by definition. Setting show_density='False'.""", UserWarning
+                        In any case, equal frequency bins have equal density, by definition. Setting show_density='False'.""",
+                UserWarning,
             )
 
         if normalization_type not in ["log", "linear"]:
@@ -427,7 +439,7 @@ class CalibrationCurve:
                 Defaults to False.
             **kwargs (Dict[str, Any]):
                 matplotlib keyword arguments for customising the plot.
-        
+
         Returns:
             Tuple[Figure, Axes]
         """
