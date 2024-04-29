@@ -26,7 +26,7 @@ def validate_input(func: Callable[..., Any]) -> Callable[..., Any]:
       The original function's return value, if all inputs are valid.
     """    
     @wraps(func)
-    def wrapper(y_pred, y_true, num_bins, method, *args, **kwargs):
+    def wrapper(y_pred, y_true, num_bins: int = 20, method: str = 'width', *args, **kwargs):
         
         y_pred = np.asarray(y_pred)
         if y_pred.ndim > 2 or np.any(y_pred < 0) or np.any(y_pred > 1):
@@ -58,7 +58,7 @@ def validate_input(func: Callable[..., Any]) -> Callable[..., Any]:
 
 
 @validate_input
-def bin_probabilities(y_pred: np.ndarray, y_true: np.ndarray, num_bins: int, method: str = 'width') -> dict:
+def bin_probabilities(y_pred: np.ndarray, y_true: np.ndarray, num_bins: int = 20, method: str = 'width') -> dict:
     """
     Group predictions into bins, along with corresponding true labels.
     
@@ -328,23 +328,54 @@ def _sort_predictions(y_pred_class_i: list, y_true_class_i: list) -> tuple:
     return list(y_pred_sorted), list(y_true_sorted)
 
 
-def get_classwise_bin_weights(bins: dict, num_bins: int, num_samples: int, num_classes: int) -> np.ndarray:
+def validate_bins(func: Callable[..., Any]) -> Callable[..., Any]:
     """
-    Calculate the 
+    Validate the input parameters to ensure they are in the correct format. Otherwise, raise error.
+
+    Args:
+        func: The method for which we validate the input.
+
+    Raises:
+      ValueError: If any of the inputs do not meet the validation criteria.
+
+    Returns:
+      The original function's return value, if all inputs are valid.
+    """    
+    @wraps(func)
+    def wrapper(bins: dict,  *args, **kwargs):
+        assert isinstance(bins, dict) and len(bins) > 0, "'bins' must be a non-empty dict"
+        assert all(isinstance(key, int) for key in bins.keys()), "'bins' keys must be integers"
+
+        for class_i_bins in bins.values():            
+            assert isinstance(class_i_bins, dict) and len(class_i_bins) > 0, "'bins' first-level values must themselves be non-empty dictionaries."
+            assert all(isinstance(key, int) for key in class_i_bins.keys()), "'bins' first-level values must themselves be non-empty dictionaries with integer keys."
+
+            for class_i_bin_j in class_i_bins.values():            
+                assert isinstance(class_i_bin_j, dict) and "probs" in class_i_bin_j, "'bins' second-level values must themselves be dictionaries with keys: {'probs', 'num_occurrences'}"            
+                                
+        return func(bins, *args, **kwargs)
+
+    return wrapper
+
+@validate_bins
+def get_classwise_bin_weights(bins: dict) -> np.ndarray:
+    """
+    Calculate the weight of each bin across all classes.
+
     Args:
         bins (dict):
             Dictionary containing, for each class, each bin, itself containing the predicted probabilities and occurences of the given class.                    
-        num_bins (int):
-            Number of equal-width bins the interval [0, 1] is divided into.
-        num_samples (int):
-            Number of data points.
-        num_classes (int):
-            Number of classes.
 
     Returns:
         np.ndarray:
             Numpy array of shape (num_classes, num_bins) whose ijth element represents the proportion of the overall dataset whose predictions for class i lie in bin j.    
-    """    
+    """
+    num_classes = len(bins)
+    num_bins = len(bins[0])
+    num_samples = sum(
+        [len(bins[0][i]['probs']) for i in range(num_bins)]
+    )
+
     weights = [
         [
             _get_bin_weight(bins[i][b], num_samples) for b in range(num_bins)
@@ -353,4 +384,3 @@ def get_classwise_bin_weights(bins: dict, num_bins: int, num_samples: int, num_c
     ]
     
     return np.asarray(weights)
-

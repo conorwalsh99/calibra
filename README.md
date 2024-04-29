@@ -7,7 +7,7 @@ The calibration of a model is a measure of how reliable its predictions are. If 
 In certain settings, modellers may be more interested in estimating the probability of certain outcomes, rather than simply predicting the most likely outcome, such as weather forecasting, diagnosis of disease, and sports betting. Under these circumstances, evaluating a model by its calibration may be more useful than evaluating it by accuracy alone.
     
 Calibra provides a simple interface to allow users to calculate the model's class-wise expected calibration error, for any number of classes. It is highly compatible with scikit-learn and matplotlib.
-To see how to use calibra, check out notebooks/examples.ipynb for a short tutorial. 
+To see how to use calibra, check out [notebooks/examples.ipynb](https://github.com/conorwalsh99/calibra/blob/main/notebooks/examples.ipynb) for a short tutorial. 
 
 
 # Installation
@@ -83,5 +83,6 @@ Calibra is freely available under the [MIT License](https://github.com/conorwals
 
 # Contact Information
 For all enquiries, email conorwalsh206@gmail.com 
+
 
 

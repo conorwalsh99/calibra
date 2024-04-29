@@ -638,8 +638,7 @@ def _back_fill_equal_frequency_bins_expected():
 
 
 @pytest.fixture
-def get_classwise_bin_weights_input():
-    num_bins, num_samples, num_classes = 5, 10, 2
+def get_classwise_bin_weights_input():    
     bins = {
         0: {
             0: {
@@ -686,12 +685,15 @@ def get_classwise_bin_weights_input():
             },
         },
     }
-    return bins, num_bins, num_samples, num_classes
-
+    return bins
 
 @pytest.fixture
 def get_classwise_bin_weights_expected():
     return np.asarray([[0.2, 0.2, 0.2, 0.2, 0.2], [0.2, 0.2, 0.2, 0.2, 0.2]])
+
+@pytest.fixture
+def get_classwise_bin_weights_bad_input():
+    return {}
 
 
 ###### test_errors.py ######

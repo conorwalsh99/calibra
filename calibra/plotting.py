@@ -42,10 +42,6 @@ class CalibrationCurve:
             Method of splitting interval [0, 1] into bins. If set to 'width' divides the interval [0, 1] into num_bins bins of equal width.
             If set to 'frequency' divides the interval [0, 1] into approximately num_bins bins, each containing approximately num_samples/num_bins data points.
             Defaults to 'width'.
-        num_samples (int):
-            Number of data points.
-        num_classes (int):
-            Number of classes.
         bins (Dict[int, Dict[int, Dict[str, Union[list, int]]]]):
             Dictionary containing, for each class, a dictionary for each bin, itself a dictionary containing the predicted probabilities and number of occurrences of the given class.
         classwise_bin_weights (np.ndarray):
@@ -76,14 +72,11 @@ class CalibrationCurve:
         self.y_pred = _reshape_y_pred(y_pred)
         self.y_true = y_true
         self.num_bins = num_bins
-        self.method = method
-        self.num_samples, self.num_classes = self.y_pred.shape
+        self.method = method        
         self.bins = bin_probabilities(
             self.y_pred, self.y_true, self.num_bins, self.method
         )
-        self.classwise_bin_weights = get_classwise_bin_weights(
-            self.bins, self.num_bins, self.num_samples, self.num_classes
-        )
+        self.classwise_bin_weights = get_classwise_bin_weights(self.bins)
         self.bin_boundaries = list(np.linspace(0, 1, self.num_bins + 1))
 
     @staticmethod
@@ -445,7 +438,7 @@ class CalibrationCurve:
 
         fig, ax = plt.subplots()
         ax.plot(
-            [0, 1], [0, 1], color="black", linestyle="--", label="Perfectly Calibrated"
+            [0, 1], [0, 1], color="black", linestyle="--", label="Perfect Calibration"
         )
         x_segments, y_segments, weight_segments = self._generate_x_y(class_label)
 

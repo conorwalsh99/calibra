@@ -279,6 +279,10 @@ def test_back_fill_equal_frequency_bins(_back_fill_equal_frequency_bins_input, _
     assert result == expected, f'_back_fill_equal_frequency_bins returned {result} instead of {expected}.'
 
 def test_get_classwise_bin_weights(get_classwise_bin_weights_input, get_classwise_bin_weights_expected):
-    result = get_classwise_bin_weights(*get_classwise_bin_weights_input)
+    result = get_classwise_bin_weights(get_classwise_bin_weights_input)
     expected = get_classwise_bin_weights_expected
     assert np.allclose(result, expected), f'get_classwise_bin_weights returned {result} instead of {expected}.'
+
+def test_get_classwise_bin_weights_bad_input(get_classwise_bin_weights_bad_input):
+    with pytest.raises(AssertionError):
+        result = get_classwise_bin_weights(get_classwise_bin_weights_bad_input)
