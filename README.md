@@ -84,5 +84,19 @@ Calibra is freely available under the [MIT License](https://github.com/conorwals
 # Contact Information
 For all enquiries, email conorwalsh206@gmail.com 
 
+# Test Coverage 
 
+|Name                     |Stmts   |Miss  |Cover|
+|-------------------------|--------|------|-----|
+|calibra\__init__.py      |    3   |   0  | 100%|
+|calibra\errors.py        |   29   |   0  | 100%|
+|calibra\plotting.py      |  128   |   6  |  95%|
+|calibra\utils.py         |  115   |   3  |  97%|
+|tests\__init__.py        |    0   |   0  | 100%|
+|tests\conftest.py        |  405   |   0  | 100%|
+|tests\test_errors.py     |   59   |   0  | 100%|
+|tests\test_plotting.py   |  185   |   0  | 100%|
+|tests\test_utils.py      |  217   |  45  |  79%|
+|-------------------------|--------|------|-----|
+|TOTAL                    |1141    | 54   |  95%|
 
