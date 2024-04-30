@@ -1,6 +1,5 @@
-import pandas as pd
 import numpy as np
-from typing import Union
+from typing import Union, Tuple
 
 from calibra.utils import bin_probabilities, _reshape_y_pred, _get_bin_weight
 
@@ -11,15 +10,15 @@ def classwise_ece(
     num_bins: int = 20,
     method: str = "width",
     return_classwise_errors: bool = False,
-) -> Union[float, tuple]:
+) -> Union[float, Tuple[float, np.ndarray]]:
     """
     Calculate the class-wise Expected Calibration Error (ECE) of a set of predictions.
 
     Args:
-        y_pred (ndarray):
+        y_pred (np.ndarray):
             Array-like object of shape (num_samples, num_classes) where ij position is predicted probability of data point i belonging to class j.
             Alternatively may be of shape (num_samples,) for binary classification where i position is predicted probability of data point i belonging to class 1 (positive class).
-        y_true (ndarray):
+        y_true (np.ndarray):
             This 1-D array of length num_samples contains the true label for each data point.
         num_bins (int):
             Number of bins the interval [0, 1] is divided into. Exact if method='width', approximate if method='frequency'.
@@ -28,18 +27,17 @@ def classwise_ece(
             If set to 'frequency' divides the interval [0, 1] into approximately num_bins bins, each containing approximately num_samples/num_bins data points.
             Defaults to 'width'.
         return_classwise_errors (bool):
-            If True returns a numpy array of shape (num_classes,) containing the contribution of each class to the class-wise expected calibration error. Defaults to False.
+            If True returns a numpy array of shape (num_classes,) containing the error for each class. Defaults to False.
 
     Returns:
         float:
             Value of the class-wise expected calibration error. This is an element of [0,1].
-
         tuple:
             Tuple containing a float and a numpy array.
                 float:
                     Value of the class-wise expected calibration error. This is an element of [0,1].
                 np.ndarray:
-                    Numpy array of shape (num_classes) whose ith element represents the contribution of class i to the class-wise expected calibration error.
+                    Numpy array of shape (num_classes) whose ith element represents the class i error.
     """
     y_pred = _reshape_y_pred(y_pred)
     num_samples, num_classes = y_pred.shape
@@ -71,7 +69,7 @@ def _get_classwise_errors(
 
     Returns:
         np.ndarray:
-            Numpy array of shape (num_classes) whose ith element represents the contribution of class i to the class-wise expected calibration error.
+            Numpy array of shape (num_classes) whose ith element represents the class i error.
     """
     errors = np.zeros(num_classes)
 

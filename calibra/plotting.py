@@ -18,10 +18,10 @@ class CalibrationCurve:
     object to customise calibration curve graph to their desire.
 
     Args:
-        y_pred (ndarray):
+        y_pred (np.ndarray):
             Array-like object of shape (num_samples, num_classes) where ij position is predicted probability of data point i belonging to class j.
             Alternatively may be of shape (num_samples,) for binary classification where i position is predicted probability of data point i belonging to class 1 (positive class).
-        y_true (ndarray):
+        y_true (np.ndarray):
             This 1-D array of length num_samples contains the true label for each data point.
         num_bins (int):
             Number of bins the interval [0, 1] is divided into. Exact if method='width', approximate if method='frequency'.
@@ -31,10 +31,10 @@ class CalibrationCurve:
             Defaults to 'width'.
 
     Attributes:
-        y_pred (ndarray):
+        y_pred (np.ndarray):
             Array-like object of shape (num_samples, num_classes) where ij position is predicted probability of data point i belonging to class j.
             Alternatively may be of shape (num_samples,) for binary classification where i position is predicted probability of data point i belonging to class 1 (positive class).
-        y_true (ndarray):
+        y_true (np.ndarray):
             This 1-D array of length num_samples contains the true label for each data point.
         num_bins (int):
             Number of bins the interval [0, 1] is divided into. Exact if method='width', approximate if method='frequency'.
@@ -47,7 +47,7 @@ class CalibrationCurve:
         classwise_bin_weights (np.ndarray):
             Numpy array of shape (num_classes, num_bins) whose ijth element represents the proportion of the overall dataset whose predictions for class i lie in bin j.
         bin_boundaries (list):
-            Ordered list of length num_bins + 1 containing start and end point of each bin on interval [0, 1].
+            Ordered list of length num_bins + 1 containing start and end point of each bin on interval [0, 1]. Only applies when method='width'.
         LIGHT_BLUE (np.ndarray):
             Normalised rgb value for light blue. Used as lightest shade of blue for density-based color mapping (i.e. for bins with extremely low density)
         DARK_BLUE (np.ndarray):
@@ -55,7 +55,6 @@ class CalibrationCurve:
         COLORMAP (LinearSegmentedColormap):
             Color map which determines shade of blue the bin segments are plotted with (depending on weight of bin).
     """
-
     LIGHT_BLUE = np.array([173, 216, 230]) / 255.0
     DARK_BLUE = np.array([4, 12, 115]) / 255.0
     COLORMAP = LinearSegmentedColormap.from_list(
@@ -177,7 +176,7 @@ class CalibrationCurve:
         and the final bin, for which we only need to include the start and centre (as the original calibration curve plot finishes at its centre).
         Similarly, the weights of the first and final bins only need to be entered in w_new once.
 
-        The only other exception is for whose 'centre' (expected frequency) coincides with their start boundary. In this case we only include this point once
+        The only other exception is for bins whose 'centre' (expected frequency) coincides with their start boundary. In this case we only include this point once
         in x_new, and similarly, only include its weight once in the w_new (as we can simply plot the whole bin in one segment, start to finish).
 
         pseduo-code:
@@ -194,7 +193,7 @@ class CalibrationCurve:
             -> for final bin, check if centre already in x_new (this will be the case if the segment consists of two bins, and the centre of the second bin coincides with the start of the bin)
                 -> if not, add centre, weight of final bin to x_new, w_new
 
-        Note: For equality checks, we may include tolerance EPSILON to account for floating point errors.
+        Note: For equality checks, we include tolerance EPSILON to account for floating point errors.
 
         Args:
             x (List[float]):
@@ -334,7 +333,7 @@ class CalibrationCurve:
         weights: List[float],
         normalizer: Union[LogNorm, Normalize],
     ) -> LineCollection:
-        """Get collections of lines to plot calibration curve. Each line in the collection represents either half a bin, or a full bin
+        """Get collection of lines to plot the calibration curve. Each line in the collection represents either half a bin, or a full bin
         along the calibration curve. The color of each line is a function of the density (weight) of the given bin.
 
         Args:
@@ -342,7 +341,7 @@ class CalibrationCurve:
             y (List[float]): List of actual frequencies of each bin along given segment of the calibration curve.
             weights (List[float]): List of weights corresponding to each bin along given segment of the calibration curve.
             normalizer (Union[Normalize, LogNorm]): A function that scales bin weights from the specified range [vmin, vmax] in the plot() method to a normalized range [0, 1].
-                Values outside of [vmin, vmax] are clamped at 0 or 1. This normalized range is then used for density-based color mapping. The normalization can be either logarithmic or linear:
+                Values less than vmin are clamped at 0. This normalized range is then used for density-based color mapping. The normalization can be either logarithmic or linear:
                 - Linear normalization (Normalize) scales values directly proportionate to their distance between vmin and vmax.
                 - Logarithmic normalization (LogNorm) emphasizes differences in lower ranges by scaling the logarithm of values, making subtle variations in lower densities more visible.
                 Defaults to LogNorm.
@@ -387,7 +386,7 @@ class CalibrationCurve:
                 Defaults to False.
             normalization_type (str):
                 Indicates method for scaling bin weights. These weights can be scaled either linearly or logarithmically from [vmin, vmax] to [0, 1] (with values
-                outside of [vmin, vmax] being clamped to 0 or 1).
+                less than vmin being clamped to 0).
             vmin (float):
                 The minimum value used for normalization, setting the lower bound of the data range that maps to the lower end of the colormap.
             vmax (float):
@@ -400,7 +399,7 @@ class CalibrationCurve:
             show_density = False
             warnings.warn(
                 """Density-based color mapping not available when method=='frequency', as bins do not have well-defined boundaries.  
-                        In any case, equal frequency bins have equal density, by definition. Setting show_density='False'.""",
+                        In any case, equal frequency bins have equal density, by definition. Setting show_density=False.""",
                 UserWarning,
             )
 
@@ -437,6 +436,13 @@ class CalibrationCurve:
             show_density (bool):
                 If True, the color strength of the curve is a function of the bin density at each point.
                 Defaults to False.
+            normalization_type (str):
+                Indicates method for scaling bin weights. These weights can be scaled either linearly or logarithmically from [vmin, vmax] to [0, 1] (with values
+                less than vmin being clamped to 0).
+            vmin (float):
+                The minimum value used for normalization, setting the lower bound of the data range that maps to the lower end of the colormap.
+            vmax (float):
+                The maximum value used for normalization, defining the upper bound of the data range that maps to the upper end of the colormap.
             **kwargs (Dict[str, Any]):
                 matplotlib keyword arguments for customising the plot.
 
