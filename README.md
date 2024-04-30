@@ -99,4 +99,3 @@ For all enquiries, email conorwalsh206@gmail.com
 |tests\test_utils.py      |  217   |  45  |  79%|
 |-------------------------|--------|------|-----|
 |TOTAL                    |1141    | 54   |  95%|
-

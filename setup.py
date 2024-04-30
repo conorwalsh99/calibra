@@ -4,11 +4,11 @@
 
 from setuptools import setup, find_packages
 
-with open('README.rst') as readme_file:
+with open('README.md') as readme_file:
     readme = readme_file.read()
 
-with open('HISTORY.rst') as history_file:
-    history = history_file.read()
+# with open('HISTORY.rst') as history_file:
+#     history = history_file.read()
 
 requirements = ['pandas', 'numpy']
 
@@ -31,7 +31,8 @@ setup(
     description="Toolkit for calibration of machine learning classifiers.",
     install_requires=requirements,
     license="MIT license",
-    long_description=readme + '\n\n' + history,
+    long_description=readme,
+    long_description_content_type='text/markdown',
     include_package_data=True,
     keywords='calibra',
     name='calibra',
@@ -39,6 +40,8 @@ setup(
     test_suite='tests',
     tests_require=test_requirements,
     url='https://github.com/conorwalsh99/calibra',
-    version='0.3.1',
+    version='0.3.2',
     zip_safe=False,
 )
+
+# + '\n\n' + history
