@@ -45,7 +45,7 @@ The class-wise ECE is given by the following equation:
 
 for the k-class problem with m bins. For each class, we weight each bin by the proportion of the dataset it contains, and get the absolute error between the expected and actual rate of occurrence (of instances of the given class) within each bin. We then sum these weighted deviations across all bins in the given class to get the error for that class, and get the average of these errors across all classes. 
 
-By default the error is calculated for 20 bins of equal width, where the i_th bin is the interval [i/m, (i+1)/m), i.e. each interval includes its start boundary but not its end boundary, except for the final bin. These default values can be adjusted by changing the 'num_bins' and 'method' parameters.
+By default the error is calculated for 20 bins of equal width, where the i_th bin is the interval [(i-1)/m, (i/m), i.e. each interval includes its start boundary but not its end boundary, except for the final bin. These default values can be adjusted by changing the 'num_bins' and 'method' parameters.
 
 Users can also visualise the calibration of their models by plotting calibration curves:
 
