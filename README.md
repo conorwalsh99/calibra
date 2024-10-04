@@ -15,7 +15,7 @@ To see how to use calibra, check out [notebooks/examples.ipynb](https://github.c
 - Python (>=3.6)
 - Pandas
 - NumPy 
-- Matplotlib
+- Matplotlib (>=3.5.1)
 
 ## User installation
 
